@@ -16,8 +16,8 @@
 
 package lunium
 
-trait Fancy[F[_]] {
+trait Fancy[F[_, _]] {
 
-  def screenshot: F[Array[Byte]]
+  def screenshot: F[Throwable, Array[Byte]]
 
 }

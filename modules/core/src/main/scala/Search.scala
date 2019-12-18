@@ -16,14 +16,14 @@
 
 package lunium
 
-trait Search[F[_]] {
+trait Search[F[_, _]] {
 
   def findElement(
     elementLocationStrategy: ElementLocationStrategy
-  ): F[Option[Element[F]]]
+  ): F[Throwable, Option[Element[F]]]
 
   def findElements(
     elementLocationStrategy: ElementLocationStrategy
-  ): F[List[Element[F]]]
+  ): F[Throwable, List[Element[F]]]
 
 }

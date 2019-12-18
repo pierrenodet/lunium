@@ -49,16 +49,16 @@ object Cookie {
 
 }
 
-trait Bakery[F[_]] {
+trait Bakery[F[_, _]] {
 
-  def cookies: F[List[Cookie]]
+  def cookies: F[Throwable, List[Cookie]]
 
-  def findCookie(name: String): F[Option[Cookie]]
+  def findCookie(name: String): F[Throwable, Option[Cookie]]
 
-  def addCookie(cookie: Cookie): F[Unit]
+  def addCookie(cookie: Cookie): F[Throwable, Unit]
 
-  def deleteCookie(name: String): F[Unit]
+  def deleteCookie(name: String): F[Throwable, Unit]
 
-  def deleteCookies: F[Unit]
+  def deleteCookies: F[Throwable, Unit]
 
 }

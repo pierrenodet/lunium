@@ -20,22 +20,28 @@ case class SessionStatus(ready: Boolean, message: String)
 
 final case class SessionId(value: String)
 
-trait Session[F[_]] extends Fancy[F] with Search[F] with Document[F] with Execution[F] with Bakery[F] with Context[F] {
+trait Session[F[_, _]]
+    extends Fancy[F]
+    with Search[F]
+    with Document[F]
+    with Execution[F]
+    with Bakery[F]
+    with Context[F] {
 
-  def timeout: F[Timeout]
-  def setTimeout(timeout: Timeout): F[Unit]
+  def timeout: F[Throwable, Timeout]
+  def setTimeout(timeout: Timeout): F[Throwable, Unit]
 
-  def navigate(command: NavigationCommand): F[Unit]
+  def navigate(command: NavigationCommand): F[Throwable, Unit]
 
-  def to(url: String): F[Unit] = navigate(Url(url))
-  def back: F[Unit]            = navigate(Back)
-  def forward: F[Unit]         = navigate(Forward)
-  def refresh: F[Unit]         = navigate(Refresh)
+  def to(url: String): F[Throwable, Unit] = navigate(Url(url))
+  def back: F[Throwable, Unit]            = navigate(Back)
+  def forward: F[Throwable, Unit]         = navigate(Forward)
+  def refresh: F[Throwable, Unit]         = navigate(Refresh)
 
-  val url: F[String]
-  val title: F[String]
+  val url: F[Nothing, String]
+  val title: F[Nothing, String]
 
-  def contexts: F[List[ContextType]]
-  def current: F[ContextType]
+  def contexts: F[Throwable, List[ContextType]]
+  def current: F[Throwable, ContextType]
 
 }

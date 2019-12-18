@@ -44,24 +44,18 @@ object ContextType {
 
 }
 
-trait Context[F[_]] {
+trait Context[F[_, _]] {
 
-  val rect: F[Rect]
+  val rect: F[Nothing, Rect]
 
-  def resize(rect: Rect): F[Unit]
+  def resize(rect: Rect): F[Throwable, Unit]
 
-  def setState(windowState: WindowState): F[Unit]
+  def setState(windowState: WindowState): F[Throwable, Unit]
 
-  def maximize: F[Unit] = setState(Maximized)
+  def maximize: F[Throwable, Unit] = setState(Maximized)
 
-  def minimize: F[Unit] = setState(Minimized)
+  def minimize: F[Throwable, Unit] = setState(Minimized)
 
-  def fullscreen: F[Unit] = setState(FullScreen)
-
-}
-
-object Context {
-
-  def apply[F[_]](implicit instance: Context[F]): Context[F] = instance
+  def fullscreen: F[Throwable, Unit] = setState(FullScreen)
 
 }

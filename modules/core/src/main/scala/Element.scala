@@ -25,30 +25,30 @@ case class XPath(value: String)   extends ElementLocationStrategy
 
 final case class ElementId(value: String)
 
-trait Element[F[_]] extends Search[F] with Fancy[F] {
+trait Element[F[_, _]] extends Search[F] with Fancy[F] {
 
-  def selected: F[Boolean]
+  def selected: F[Throwable, Boolean]
 
-  def hasAttribute(name: String): F[Boolean]
+  def hasAttribute(name: String): F[Throwable, Boolean]
 
-  def attribute(name: String): F[String]
+  def attribute(name: String): F[Throwable, String]
 
-  def property(name: String): F[String]
+  def property(name: String): F[Throwable, String]
 
-  def css(name: String): F[String]
+  def css(name: String): F[Throwable, String]
 
-  def text(whitespace: String = "WS"): F[String]
+  def text(whitespace: String = "WS"): F[Throwable, String]
 
-  def name: F[String]
+  def name: F[Throwable, String]
 
-  def rect: F[Rect]
+  def rect: F[Throwable, Rect]
 
-  def enabled: F[Boolean]
+  def enabled: F[Throwable, Boolean]
 
-  def click: F[Unit]
+  def click: F[Throwable, Unit]
 
-  def clear: F[Unit]
+  def clear: F[Throwable, Unit]
 
-  def sendKeys(keys: Keys): F[Unit]
+  def sendKeys(keys: Keys): F[Throwable, Unit]
 
 }

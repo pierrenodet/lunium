@@ -21,55 +21,62 @@ import lunium._
 import lunium.selenium.implicits._
 import org.openqa.selenium.{ OutputType => SeleniumOutputType, WebElement => SeleniumWebElement }
 import scala.jdk.CollectionConverters._
+import cats.data.EitherT
 
-class UmbreonElement[F[_]: Sync](private[lunium] val element: SeleniumWebElement) extends Element[F] {
+class UmbreonElement[F[_]: Sync](private[lunium] val element: SeleniumWebElement) extends Element[EitherT[F, ?, ?]] {
 
   def findElement(
     elementLocationStrategy: ElementLocationStrategy
-  ): F[Option[Element[F]]] =
-    Sync[F].delay(
-      Option(element.findElement(elementLocationStrategy.asSelenium)).map(new UmbreonElement[F](_))
+  ): EitherT[F, Throwable, Option[Element[EitherT[F, ?, ?]]]] =
+    EitherT.liftF(
+      Sync[F].delay(
+        Option(element.findElement(elementLocationStrategy.asSelenium)).map(new UmbreonElement[F](_))
+      )
     )
 
   def findElements(
     elementLocationStrategy: ElementLocationStrategy
-  ): F[List[Element[F]]] =
-    Sync[F].delay(
-      element
-        .findElements(elementLocationStrategy.asSelenium)
-        .asScala
-        .toList
-        .map(new UmbreonElement[F](_))
+  ): EitherT[F, Throwable, List[Element[EitherT[F, ?, ?]]]] =
+    EitherT.liftF(
+      Sync[F].delay(
+        element
+          .findElements(elementLocationStrategy.asSelenium)
+          .asScala
+          .toList
+          .map(new UmbreonElement[F](_))
+      )
     )
 
-  def screenshot: F[Array[Byte]] = Sync[F].delay(element.getScreenshotAs(SeleniumOutputType.BYTES))
+  def screenshot: EitherT[F, Throwable, Array[Byte]] =
+    EitherT.liftF(Sync[F].delay(element.getScreenshotAs(SeleniumOutputType.BYTES)))
 
-  def selected: F[Boolean] = Sync[F].delay(element.isSelected)
+  def selected: EitherT[F, Throwable, Boolean] = EitherT.liftF(Sync[F].delay(element.isSelected))
 
-  def attribute(name: String): F[String] = Sync[F].delay(element.getAttribute(name))
+  def attribute(name: String): EitherT[F, Throwable, String] = EitherT.liftF(Sync[F].delay(element.getAttribute(name)))
 
-  def hasAttribute(name: String): F[Boolean] = Sync[F].map(attribute(name))(name => Option(name).isDefined)
+  def hasAttribute(name: String): EitherT[F, Throwable, Boolean] = attribute(name).map(name => Option(name).isDefined)
 
-  def property(name: String): F[String] = attribute(name)
+  def property(name: String): EitherT[F, Throwable, String] = attribute(name)
 
-  def css(name: String): F[String] = Sync[F].delay(element.getCssValue(name))
+  def css(name: String): EitherT[F, Throwable, String] = EitherT.liftF(Sync[F].delay(element.getCssValue(name)))
 
-  def text(whitespace: String = "WS"): F[String] = Sync[F].delay(element.getText)
+  def text(whitespace: String = "WS"): EitherT[F, Throwable, String] = EitherT.liftF(Sync[F].delay(element.getText))
 
-  def name: F[String] = Sync[F].delay(element.getTagName)
+  def name: EitherT[F, Throwable, String] = EitherT.liftF(Sync[F].delay(element.getTagName))
 
-  def rect: F[Rect] = Sync[F].delay(element.getRect.asLunium)
+  def rect: EitherT[F, Throwable, Rect] = EitherT.liftF(Sync[F].delay(element.getRect.asLunium))
 
-  def enabled: F[Boolean] = Sync[F].delay(element.isEnabled)
+  def enabled: EitherT[F, Throwable, Boolean] = EitherT.liftF(Sync[F].delay(element.isEnabled))
 
-  def click: F[Unit] = Sync[F].delay(element.click())
+  def click: EitherT[F, Throwable, Unit] = EitherT.liftF(Sync[F].delay(element.click()))
 
-  def clear: F[Unit] = Sync[F].delay(element.clear())
+  def clear: EitherT[F, Throwable, Unit] = EitherT.liftF(Sync[F].delay(element.clear()))
 
-  def sendKeys(keys: Keys): F[Unit] = Sync[F].delay(element.sendKeys(keys.asSelenium))
+  def sendKeys(keys: Keys): EitherT[F, Throwable, Unit] =
+    EitherT.liftF(Sync[F].delay(element.sendKeys(keys.asSelenium)))
 
 }
 
 object UmbreonElement {
-  def apply[F[_]: Sync](element: SeleniumWebElement): Element[F] = new UmbreonElement[F](element)
+  def apply[F[_]: Sync](element: SeleniumWebElement): Element[EitherT[F, ?, ?]] = new UmbreonElement[F](element)
 }

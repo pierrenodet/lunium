@@ -27,7 +27,8 @@ import cats.Id
 import cats.effect._
 import cats.implicits._
 import scala.util.Try
-
+import cats.data.EitherT
+/*
 class TestSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends Session[Id] {
 
   def findElement(
@@ -109,3 +110,4 @@ object TestSession {
   ): TestSession =
     new TestSession(new SeleniumRemoteWebDriver(new URL(s"http://$host:$port"), capabilities.asSelenium))
 }
+*/

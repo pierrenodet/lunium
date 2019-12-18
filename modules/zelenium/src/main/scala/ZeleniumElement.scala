@@ -21,17 +21,17 @@ import org.openqa.selenium.{ OutputType => SeleniumOutputType, WebElement => Sel
 import zio._
 import scala.jdk.CollectionConverters._
 
-class ZeleniumElement(element: SeleniumWebElement) extends Element[Task] {
+class ZeleniumElement(element: SeleniumWebElement) extends Element[IO] {
 
   def findElement(
     elementLocationStrategy: ElementLocationStrategy
-  ): Task[Option[Element[Task]]] =
-    Task.effect(Option(element.findElement(elementLocationStrategy.asSelenium)).map(new ZeleniumElement(_)))
+  ): IO[Throwable, Option[Element[IO]]] =
+    IO.effect(Option(element.findElement(elementLocationStrategy.asSelenium)).map(new ZeleniumElement(_)))
 
   def findElements(
     elementLocationStrategy: ElementLocationStrategy
-  ): Task[List[Element[Task]]] =
-    Task.effect(
+  ): IO[Throwable, List[Element[IO]]] =
+    IO.effect(
       element
         .findElements(elementLocationStrategy.asSelenium)
         .asScala
@@ -39,35 +39,35 @@ class ZeleniumElement(element: SeleniumWebElement) extends Element[Task] {
         .map(new ZeleniumElement(_))
     )
 
-  def screenshot: Task[Array[Byte]] = Task.effect(element.getScreenshotAs(SeleniumOutputType.BYTES))
+  def screenshot: IO[Throwable, Array[Byte]] = IO.effect(element.getScreenshotAs(SeleniumOutputType.BYTES))
 
-  def selected: Task[Boolean] = Task.effect(element.isSelected)
+  def selected: IO[Throwable, Boolean] = IO.effect(element.isSelected)
 
-  def attribute(name: String): Task[String] = Task.effect(element.getAttribute(name))
+  def attribute(name: String): IO[Throwable, String] = IO.effect(element.getAttribute(name))
 
-  def hasAttribute(name: String): Task[Boolean] =
-    Task.effectSuspendTotal(attribute(name)).map(name => Option(name).isDefined)
+  def hasAttribute(name: String): IO[Throwable, Boolean] =
+    IO.effectSuspendTotal(attribute(name)).map(name => Option(name).isDefined)
 
-  def property(name: String): Task[String] = attribute(name)
+  def property(name: String): IO[Throwable, String] = attribute(name)
 
-  def css(name: String): Task[String] = Task.effect(element.getCssValue(name))
+  def css(name: String): IO[Throwable, String] = IO.effect(element.getCssValue(name))
 
-  def text(whitespace: String = "WS"): Task[String] = Task.effect(element.getText)
+  def text(whitespace: String = "WS"): IO[Throwable, String] = IO.effect(element.getText)
 
-  def name: Task[String] = Task.effect(element.getTagName)
+  def name: IO[Throwable, String] = IO.effect(element.getTagName)
 
-  def rect: Task[Rect] = Task.effect(element.getRect.asLunium)
+  def rect: IO[Throwable, Rect] = IO.effect(element.getRect.asLunium)
 
-  def enabled: Task[Boolean] = Task.effect(element.isEnabled)
+  def enabled: IO[Throwable, Boolean] = IO.effect(element.isEnabled)
 
-  def click: Task[Unit] = Task.effect(element.click())
+  def click: IO[Throwable, Unit] = IO.effect(element.click())
 
-  def clear: Task[Unit] = Task.effect(element.clear())
+  def clear: IO[Throwable, Unit] = IO.effect(element.clear())
 
-  def sendKeys(keys: Keys): Task[Unit] = Task.effect(element.sendKeys(keys.asSelenium))
+  def sendKeys(keys: Keys): IO[Throwable, Unit] = IO.effect(element.sendKeys(keys.asSelenium))
 
 }
 
 object ZeleniumElement {
-  def apply(element: SeleniumWebElement): Element[Task] = new ZeleniumElement(element)
+  def apply(element: SeleniumWebElement): Element[IO] = new ZeleniumElement(element)
 }

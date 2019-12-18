@@ -22,9 +22,9 @@ import cats.Monad
 
 import lunium._
 
-trait BakeryLaws[F[_]] {
+trait BakeryLaws[F[_, _]] {
   def algebra: Session[F]
-  implicit def M: Monad[F]
+  implicit def M: Monad[F[Throwable, ?]]
 
   import cats.syntax.apply._
   import cats.syntax.flatMap._
@@ -51,10 +51,10 @@ trait BakeryLaws[F[_]] {
 
 object BakeryLaws {
 
-  def apply[F[_]](instance: Session[F])(implicit ev: Monad[F]) =
+  def apply[F[_, _]](instance: Session[F])(implicit ev: Monad[F[Throwable, ?]]) =
     new BakeryLaws[F] {
-      override val algebra              = instance
-      override implicit val M: Monad[F] = ev
+      override val algebra                            = instance
+      override implicit val M: Monad[F[Throwable, ?]] = ev
     }
 
 }

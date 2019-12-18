@@ -22,6 +22,10 @@ import cats.syntax.all._
 import lunium._
 import lunium.umbreon._
 import lunium.selenium.implicits._
+import cats.data.EitherT
+import cats.effect.implicits._
+import cats.implicits._
+
 object Main extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
@@ -31,11 +35,15 @@ object Main extends IOApp {
         val res = for {
           _ <- session.to("http://google.com")
           _ <- session.deleteCookies
-          _ <- IO { println(Cookie("n", "a", "/", Some("google.com"), false, false, scala.None).asSelenium.toString()) }
+          _ <- EitherT.liftF {
+                IO {
+                  println(Cookie("n", "a", "/", Some("google.com"), false, false, scala.None).asSelenium.toString())
+                }
+              }
           //_ <- session.addCookie(Cookie("n","a","/",Some("google.com"),false,false,scala.None))
           found <- session.findCookie("n")
         } yield (found)
-        res.map(r => { println(r); ExitCode.Success })
+        res.map(r => { println(r); ExitCode.Success }).valueOr(_ => ExitCode.Error)
       })
 
 }

@@ -18,17 +18,13 @@ package lunium
 
 case class PageSource(value: String)
 
-trait Document[F[_]] {
-  def source: F[PageSource]
+trait Document[F[_, _]] {
+  def source: F[Throwable, PageSource]
 }
 
 case class Script(value: String)
 
-trait Execution[F[_]] {
-  def executeSync(script: Script): F[String]
-  def executeAsync(script: Script): F[String]
-}
-
-object Execution {
-  def apply[F[_]](implicit instance: Execution[F]): Execution[F] = instance
+trait Execution[F[_, _]] {
+  def executeSync(script: Script): F[Throwable, String]
+  def executeAsync(script: Script): F[Throwable, String]
 }

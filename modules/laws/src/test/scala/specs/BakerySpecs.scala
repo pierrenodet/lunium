@@ -25,7 +25,7 @@ import cats.Id
 
 import lunium._
 import lunium.selenium.implicits._
-import lunium.laws.TestSession
+//import lunium.laws.TestSession
 import lunium.laws.arbitrary.ArbitraryCookie
 import lunium.laws.discipline.BakeryTests
 
@@ -36,7 +36,7 @@ import org.scalacheck._
 import java.net.URL
 import org.openqa.selenium.remote.{ RemoteWebDriver => SeleniumRemoteWebDriver }
 import org.openqa.selenium.chrome.{ ChromeDriver => SeleniumChromeDriver }
-
+/*
 class BakerySpecs extends AnyFunSuite with Discipline with ArbitraryCookie with TestInstances with BeforeAndAfterAll {
 
     var ts:TestSession = _
@@ -52,3 +52,4 @@ class BakerySpecs extends AnyFunSuite with Discipline with ArbitraryCookie with 
    checkAll("Bakery", BakeryTests(ts).algebra)
 
 }
+*/

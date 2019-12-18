@@ -34,10 +34,14 @@ import lunium.laws._
 import lunium.laws.arbitrary._
 import lunium.umbreon._
 
-trait BakeryTests[F[_]] extends Laws {
+trait BakeryTests[F[_, _]] extends Laws {
   def laws: BakeryLaws[F]
 
-  def algebra(implicit arbEmail: Arbitrary[Cookie], eqFBool: Eq[F[Boolean]], eqFOptId: Eq[F[Option[Cookie]]]) =
+  def algebra(
+    implicit arbEmail: Arbitrary[Cookie],
+    eqFBool: Eq[F[Throwable, Boolean]],
+    eqFOptId: Eq[F[Throwable, Option[Cookie]]]
+  ) =
     new SimpleRuleSet(
       name = "Bakery",
       "find and add is some"                            -> forAll(laws.addFind _),
@@ -48,7 +52,7 @@ trait BakeryTests[F[_]] extends Laws {
 
 object BakeryTests {
 
-  def apply[F[_]: Monad](instance: Session[F]) = new BakeryTests[F] {
+  def apply[F[_, _]](instance: Session[F])(implicit m: Monad[F[Throwable, ?]]) = new BakeryTests[F] {
     override val laws: BakeryLaws[F] = BakeryLaws(instance)
   }
 

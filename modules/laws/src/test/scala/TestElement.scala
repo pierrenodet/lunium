@@ -22,8 +22,9 @@ import lunium.selenium.implicits._
 import org.openqa.selenium.{ OutputType => SeleniumOutputType, WebElement => SeleniumWebElement }
 import scala.jdk.CollectionConverters._
 import cats.Id
-
-class TestElement(private[lunium] val element: SeleniumWebElement) extends Element[Id] {
+import cats.data.EitherT
+/*
+class TestElement(private[lunium] val element: SeleniumWebElement) extends Element[EitherT[Id,?,?]] {
 
   def findElement(
     elementLocationStrategy: ElementLocationStrategy
@@ -74,3 +75,4 @@ class TestElement(private[lunium] val element: SeleniumWebElement) extends Eleme
 object TestElement {
   def apply(element: SeleniumWebElement): Element[Id] = new TestElement(element)
 }
+*/

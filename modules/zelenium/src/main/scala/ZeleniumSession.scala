@@ -26,20 +26,20 @@ import zio._
 import lunium.selenium.implicits._
 import scala.util.Try
 
-class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends Session[Task] {
+class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends Session[IO] {
 
   def findElement(
     elementLocationStrategy: ElementLocationStrategy
-  ): Task[Option[ZeleniumElement]] =
-    Task.effect(
+  ): IO[Throwable, Option[ZeleniumElement]] =
+    IO.effect(
       Option(rwd.findElement(elementLocationStrategy.asSelenium))
         .map(new ZeleniumElement(_))
     )
 
   def findElements(
     elementLocationStrategy: ElementLocationStrategy
-  ): Task[List[ZeleniumElement]] =
-    Task.effect(
+  ): IO[Throwable, List[ZeleniumElement]] =
+    IO.effect(
       rwd
         .findElements(elementLocationStrategy.asSelenium)
         .asScala
@@ -47,24 +47,24 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
         .map(new ZeleniumElement(_))
     )
 
-  def screenshot: Task[Array[Byte]] = Task.effect(rwd.getScreenshotAs(SeleniumOutputType.BYTES))
+  def screenshot: IO[Throwable, Array[Byte]] = IO.effect(rwd.getScreenshotAs(SeleniumOutputType.BYTES))
 
-  def timeout: Task[Timeout] = Task.succeed(Timeout(1))
-  def setTimeout(timeout: Timeout): Task[Unit] =
+  def timeout: IO[Nothing, Timeout] = UIO.succeed(Timeout(1))
+  def setTimeout(timeout: Timeout): IO[Throwable, Unit] =
     for {
-      _ <- Task.effect(
+      _ <- IO.effect(
             rwd.manage.timeouts.implicitlyWait(timeout.implicitWait, TimeUnit.MILLISECONDS)
           )
-      _ <- Task.effect(
+      _ <- IO.effect(
             rwd.manage.timeouts.pageLoadTimeout(timeout.pageLoad, TimeUnit.MILLISECONDS)
           )
-      _ <- Task.effect(
+      _ <- IO.effect(
             rwd.manage.timeouts
               .setScriptTimeout(timeout.script.getOrElse(-1), TimeUnit.MILLISECONDS)
           )
     } yield ()
 
-  def navigate(command: NavigationCommand): Task[Unit] = Task.effect {
+  def navigate(command: NavigationCommand): IO[Throwable, Unit] = IO.effect {
     command match {
       case Forward    => rwd.navigate().forward()
       case Url(value) => rwd.navigate().to(value)
@@ -73,39 +73,39 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
     }
   }
 
-  val url: UIO[String]   = UIO.apply(rwd.getCurrentUrl)
-  val title: UIO[String] = UIO.apply(rwd.getTitle)
+  val url: IO[Nothing, String]   = UIO.apply(rwd.getCurrentUrl)
+  val title: IO[Nothing, String] = UIO.apply(rwd.getTitle)
 
-  def contexts: Task[List[ContextType]] =
-    Task.effect(rwd.getWindowHandles.asScala.toList.flatMap(ContextType.fromString))
-  def current: Task[ContextType] = Task.effect(ContextType.fromString(rwd.getWindowHandle).getOrElse(Default))
+  def contexts: IO[Throwable, List[ContextType]] =
+    IO.effect(rwd.getWindowHandles.asScala.toList.flatMap(ContextType.fromString))
+  def current: IO[Throwable, ContextType] = IO.effect(ContextType.fromString(rwd.getWindowHandle).getOrElse(Default))
 
-  def deleteCookies: Task[Unit]              = Task.effect(rwd.manage().deleteAllCookies())
-  def addCookie(cookie: Cookie): Task[Unit]  = Task.effect(rwd.manage().addCookie(cookie.asSelenium))
-  def cookies: Task[List[Cookie]]            = Task.effect(rwd.manage().getCookies.asScala.map(_.asLunium).toList)
-  def deleteCookie(name: String): Task[Unit] = Task.effect(rwd.manage().deleteAllCookies())
-  def findCookie(name: String): Task[Option[Cookie]] =
-    Task.effect(Try(rwd.manage().getCookieNamed(name)).toOption.map(_.asLunium))
+  def deleteCookies: IO[Throwable, Unit]              = IO.effect(rwd.manage().deleteAllCookies())
+  def addCookie(cookie: Cookie): IO[Throwable, Unit]  = IO.effect(rwd.manage().addCookie(cookie.asSelenium))
+  def cookies: IO[Throwable, List[Cookie]]            = IO.effect(rwd.manage().getCookies.asScala.map(_.asLunium).toList)
+  def deleteCookie(name: String): IO[Throwable, Unit] = IO.effect(rwd.manage().deleteAllCookies())
+  def findCookie(name: String): IO[Throwable, Option[Cookie]] =
+    IO.effect(Try(rwd.manage().getCookieNamed(name)).toOption.map(_.asLunium))
 
-  def executeSync(script: Script): Task[String]  = Task.effect(rwd.executeScript(script.value).toString)
-  def executeAsync(script: Script): Task[String] = Task.effect(rwd.executeAsyncScript(script.value).toString)
+  def executeSync(script: Script): IO[Throwable, String]  = IO.effect(rwd.executeScript(script.value).toString)
+  def executeAsync(script: Script): IO[Throwable, String] = IO.effect(rwd.executeAsyncScript(script.value).toString)
 
-  def source: Task[PageSource] = Task.effect(PageSource(rwd.getPageSource))
+  def source: IO[Throwable, PageSource] = IO.effect(PageSource(rwd.getPageSource))
 
-  def resize(rect: Rect): Task[Unit] = Task.effect {
+  def resize(rect: Rect): IO[Throwable, Unit] = IO.effect {
     rwd.manage().window().setSize(rect.asSeleniumDimension)
     rwd.manage().window().setPosition(rect.asSeleniumPoint)
   }
 
-  def setState(windowState: WindowState): Task[Unit] =
-    Task.effect(windowState match {
+  def setState(windowState: WindowState): IO[Throwable, Unit] =
+    IO.effect(windowState match {
       case FullScreen => rwd.manage().window().fullscreen()
       case Maximized  => rwd.manage().window().maximize()
       case Minimized  => rwd.manage().window().setPosition(Rect(0, -1000, 0, 0).asSeleniumPoint);
     })
 
-  val rect: Task[Rect] =
-    Task.effect(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
+  val rect: IO[Nothing, Rect] =
+    UIO.apply(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
 
 }
 
@@ -116,8 +116,7 @@ object ZeleniumSession {
     capabilities: Capabilities
   ): Managed[Throwable, ZeleniumSession] =
     Managed.make(
-      Task
-        .effect(
+      IO.effect(
           new ZeleniumSession(new SeleniumRemoteWebDriver(new URL(s"http://$host:$port"), capabilities.asSelenium))
         )
     )(css => UIO.apply(css.rwd.quit()))
@@ -137,7 +136,7 @@ object ZeleniumSession {
     val fcct = zs.current
 
     def switchTo(contextType: ContextType, zs: ZeleniumSession) =
-      Task.effect(contextType match {
+      IO.effect(contextType match {
         case Default           => zs.rwd.switchTo.defaultContent()
         case Frame(id)         => zs.rwd.switchTo.frame(id)
         case Parent            => zs.rwd.switchTo.parentFrame()

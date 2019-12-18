@@ -26,87 +26,109 @@ import cats.implicits._
 import lunium.selenium.implicits._
 import scala.jdk.CollectionConverters._
 import scala.util.Try
+import cats.data.EitherT
 
-class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDriver) extends Session[F] {
+class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDriver) extends Session[EitherT[F, ?, ?]] {
 
-  def screenshot: F[Array[Byte]] = Sync[F].delay(rwd.getScreenshotAs(SeleniumOutputType.BYTES))
+  def screenshot: EitherT[F, Throwable, Array[Byte]] =
+    EitherT.liftF(Sync[F].delay(rwd.getScreenshotAs(SeleniumOutputType.BYTES)))
 
-  def timeout: F[Timeout] = Sync[F].pure(Timeout(1))
-  def setTimeout(timeout: Timeout): F[Unit] =
+  def timeout: EitherT[F, Throwable, Timeout] = EitherT.liftF(Sync[F].pure(Timeout(1)))
+  def setTimeout(timeout: Timeout): EitherT[F, Throwable, Unit] =
     for {
-      _ <- Sync[F].delay(
-            rwd.manage.timeouts.implicitlyWait(timeout.implicitWait, TimeUnit.MILLISECONDS)
+      _ <- EitherT.liftF(
+            Sync[F].delay(
+              rwd.manage.timeouts.implicitlyWait(timeout.implicitWait, TimeUnit.MILLISECONDS)
+            )
           )
-      _ <- Sync[F].delay(
-            rwd.manage.timeouts.pageLoadTimeout(timeout.pageLoad, TimeUnit.MILLISECONDS)
+      _ <- EitherT.liftF(
+            Sync[F].delay(
+              rwd.manage.timeouts.pageLoadTimeout(timeout.pageLoad, TimeUnit.MILLISECONDS)
+            )
           )
-      _ <- Sync[F].delay(
-            rwd.manage.timeouts
-              .setScriptTimeout(timeout.script.getOrElse(-1), TimeUnit.MILLISECONDS)
+      _ <- EitherT.liftF(
+            Sync[F].delay(
+              rwd.manage.timeouts
+                .setScriptTimeout(timeout.script.getOrElse(-1), TimeUnit.MILLISECONDS)
+            )
           )
     } yield ()
 
-  def navigate(command: NavigationCommand): F[Unit] = Sync[F].delay {
-    command match {
-      case Forward    => rwd.navigate().forward()
-      case Url(value) => rwd.navigate().to(value)
-      case Back       => rwd.navigate().back()
-      case Refresh    => rwd.navigate().refresh()
-    }
-  }
+  def navigate(command: NavigationCommand): EitherT[F, Throwable, Unit] =
+    EitherT.liftF(Sync[F].delay {
+      command match {
+        case Forward    => rwd.navigate().forward()
+        case Url(value) => rwd.navigate().to(value)
+        case Back       => rwd.navigate().back()
+        case Refresh    => rwd.navigate().refresh()
+      }
+    })
 
-  val url: F[String]   = Sync[F].delay(rwd.getCurrentUrl)
-  val title: F[String] = Sync[F].delay(rwd.getTitle)
+  val url: EitherT[F, Nothing, String]   = EitherT.liftF(Sync[F].delay(rwd.getCurrentUrl))
+  val title: EitherT[F, Nothing, String] = EitherT.liftF(Sync[F].delay(rwd.getTitle))
 
-  def contexts: F[List[ContextType]] =
-    Sync[F].delay(rwd.getWindowHandles.asScala.toList.flatMap(ContextType.fromString))
-  def current: F[ContextType] = Sync[F].delay(ContextType.fromString(rwd.getWindowHandle).getOrElse(Default))
+  def contexts: EitherT[F, Throwable, List[ContextType]] =
+    EitherT.liftF(Sync[F].delay(rwd.getWindowHandles.asScala.toList.flatMap(ContextType.fromString)))
+  def current: EitherT[F, Throwable, ContextType] =
+    EitherT.liftF(Sync[F].delay(ContextType.fromString(rwd.getWindowHandle).getOrElse(Default)))
 
-  def deleteCookies: F[Unit]              = Sync[F].delay(rwd.manage().deleteAllCookies())
-  def addCookie(cookie: Cookie): F[Unit]  = Sync[F].delay(rwd.manage().addCookie(cookie.asSelenium))
-  def cookies: F[List[Cookie]]            = Sync[F].delay(rwd.manage().getCookies.asScala.map(_.asLunium).toList)
-  def deleteCookie(name: String): F[Unit] = Sync[F].delay(rwd.manage().deleteAllCookies())
-  def findCookie(name: String): F[Option[Cookie]] =
-    Sync[F].delay(Option(rwd.manage().getCookieNamed(name)).map(_.asLunium))
+  def deleteCookies: EitherT[F, Throwable, Unit] = EitherT.liftF(Sync[F].delay(rwd.manage().deleteAllCookies()))
+  def addCookie(cookie: Cookie): EitherT[F, Throwable, Unit] =
+    EitherT.liftF(Sync[F].delay(rwd.manage().addCookie(cookie.asSelenium)))
+  def cookies: EitherT[F, Throwable, List[Cookie]] =
+    EitherT.liftF(Sync[F].delay(rwd.manage().getCookies.asScala.map(_.asLunium).toList))
+  def deleteCookie(name: String): EitherT[F, Throwable, Unit] =
+    EitherT.liftF(Sync[F].delay(rwd.manage().deleteAllCookies()))
+  def findCookie(name: String): EitherT[F, Throwable, Option[Cookie]] =
+    EitherT.liftF(Sync[F].delay(Option(rwd.manage().getCookieNamed(name)).map(_.asLunium)))
 
-  def executeSync(script: Script): F[String]  = Sync[F].delay(rwd.executeScript(script.value).toString)
-  def executeAsync(script: Script): F[String] = Sync[F].delay(rwd.executeAsyncScript(script.value).toString)
+  def executeSync(script: Script): EitherT[F, Throwable, String] =
+    EitherT.liftF(Sync[F].delay(rwd.executeScript(script.value).toString))
+  def executeAsync(script: Script): EitherT[F, Throwable, String] =
+    EitherT.liftF(Sync[F].delay(rwd.executeAsyncScript(script.value).toString))
 
-  def source: F[PageSource] = Sync[F].delay(PageSource(rwd.getPageSource))
+  def source: EitherT[F, Throwable, PageSource] = EitherT.liftF(Sync[F].delay(PageSource(rwd.getPageSource)))
 
   def findElement(
     elementLocationStrategy: ElementLocationStrategy
-  ): F[Option[Element[F]]] =
-    Sync[F].delay(
-      Option(rwd.findElement(elementLocationStrategy.asSelenium))
-        .map(new UmbreonElement(_))
+  ): EitherT[F, Throwable, Option[Element[EitherT[F, ?, ?]]]] =
+    EitherT.liftF(
+      Sync[F].delay(
+        Option(rwd.findElement(elementLocationStrategy.asSelenium))
+          .map(new UmbreonElement(_))
+      )
     )
 
   def findElements(
     elementLocationStrategy: ElementLocationStrategy
-  ): F[List[Element[F]]] =
-    Sync[F].delay(
-      rwd
-        .findElements(elementLocationStrategy.asSelenium)
-        .asScala
-        .toList
-        .map(new UmbreonElement(_))
+  ): EitherT[F, Throwable, List[Element[EitherT[F, ?, ?]]]] =
+    EitherT.liftF(
+      Sync[F].delay(
+        rwd
+          .findElements(elementLocationStrategy.asSelenium)
+          .asScala
+          .toList
+          .map(new UmbreonElement(_))
+      )
     )
 
-  def resize(rect: Rect): F[Unit] = Sync[F].delay {
-    rwd.manage().window().setSize(rect.asSeleniumDimension)
-    rwd.manage().window().setPosition(rect.asSeleniumPoint)
-  }
+  def resize(rect: Rect): EitherT[F, Throwable, Unit] =
+    EitherT.liftF(Sync[F].delay {
+      rwd.manage().window().setSize(rect.asSeleniumDimension)
+      rwd.manage().window().setPosition(rect.asSeleniumPoint)
+    })
 
-  def setState(windowState: WindowState): F[Unit] =
-    Sync[F].delay(windowState match {
+  def setState(windowState: WindowState): EitherT[F, Throwable, Unit] =
+    EitherT.liftF(Sync[F].delay(windowState match {
       case FullScreen => rwd.manage().window().fullscreen()
       case Maximized  => rwd.manage().window().maximize()
       case Minimized  => rwd.manage().window().setPosition(Rect(0, -1000, 0, 0).asSeleniumPoint);
-    })
+    }))
 
-  val rect: F[Rect] =
-    Sync[F].delay(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
+  val rect: EitherT[F, Nothing, Rect] =
+    EitherT.liftF(
+      Sync[F].delay(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
+    )
 
 }
 
@@ -125,32 +147,37 @@ object UmbreonSession {
       css => Sync[F].delay(css.rwd.quit())
     )
 
+  /*
   def newTab[F[_]: Sync](
     css: UmbreonSession[F]
-  ): Resource[F, UmbreonSession[F]] =
-    Resource.make(css.executeSync(Script("window.open()")).map(_ => css))(
-      css => Sync[F].delay(css.rwd.close())
+  ): Resource[F, Either[Throwable,UmbreonSession[F]]] =
+    Resource.make(css.executeSync(Script("window.open()")).map(_ => css).value)(
+      css => Sync[F].delay(css.map(_.rwd.close()))
     )
 
   def fromContextType[F[_]: Sync](
     css: UmbreonSession[F],
     contextType: ContextType
-  ): Resource[F, UmbreonSession[F]] = {
+  ): Resource[F, Either[Throwable,UmbreonSession[F]]] = {
 
     val fcct = css.current
 
-    def switchTo(contextType: ContextType, css: UmbreonSession[F]) =
-      Sync[F].delay(contextType match {
+    def switchTo(contextType: ContextType, css: UmbreonSession[F]):F[Either[Throwable,Unit]] =
+      (Sync[F].delay(Right(contextType match {
         case Default           => css.rwd.switchTo.defaultContent()
         case Frame(id)         => css.rwd.switchTo.frame(id)
         case Parent            => css.rwd.switchTo.parentFrame()
         case Window(handle, _) => css.rwd.switchTo.window(handle)
-      })
+      })))
 
-    Resource.make(switchTo(contextType, css).map(_ => css))(css => {
-      css.rwd.close()
-      fcct.map(cct => switchTo(cct, css))
+    Resource.make(switchTo(contextType, css).map(_.map(_ => css)))(ecss => {
+      ecss.map(_.rwd.close())
+      for {
+        _ <- switchTo()
+      }
+      fcct.value.flatMap(ecct => ecct.flatMap(cct => ecss.map(css => switchTo(cct,css))))
     })
   }
+ */
 
 }
