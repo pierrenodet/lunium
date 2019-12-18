@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://github.com/pierrenodet/lunium/blob/master/LICENSE)
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.pierrenodet/lunium_2.12.svg?label=maven-central&colorB=blue)](https://search.maven.org/search?q=g:%22com.github.pierrenodet%22%20AND%20a:%22lunium_2.12%22)
 
-<img alt="Noctali!" align="right" src="noctali.png" width="312" height="239"/>
+<img alt="Noctali!" align="right" src="noctali.png" width="312" height="312"/>
 
 A Retarded attempt to do a zero dependency, tagless and bifunctor based library for WebDrivers.
 
