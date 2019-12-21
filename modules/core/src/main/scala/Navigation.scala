@@ -16,13 +16,27 @@
 
 package lunium
 
+import java.net.MalformedURLException
+
 sealed trait PageLoadStrategy
 case object None   extends PageLoadStrategy
 case object Eager  extends PageLoadStrategy
 case object Normal extends PageLoadStrategy
 
 sealed trait NavigationCommand
-case object Back              extends NavigationCommand
-case object Forward           extends NavigationCommand
-case object Refresh           extends NavigationCommand
-case class Url(value: String) extends NavigationCommand
+case object Back    extends NavigationCommand
+case object Forward extends NavigationCommand
+case object Refresh extends NavigationCommand
+
+sealed case class Url private[lunium] (value: String) extends NavigationCommand
+
+object Url {
+
+  def apply(value: String): Either[InvalidArgumentException, Url] =
+    try {
+      Right(new Url(new java.net.URL(value).toString()))
+    } catch {
+      case e: MalformedURLException => Left(new InvalidArgumentException(e.getMessage()))
+    }
+
+}

@@ -20,10 +20,10 @@ trait Search[F[_, _]] {
 
   def findElement(
     elementLocationStrategy: ElementLocationStrategy
-  ): F[Throwable, Option[Element[F]]]
+  ): F[SearchElementException, Element[F]]
 
   def findElements(
     elementLocationStrategy: ElementLocationStrategy
-  ): F[Throwable, List[Element[F]]]
+  ): F[SearchElementException, List[Element[F]]]
 
 }

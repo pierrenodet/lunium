@@ -38,14 +38,14 @@ trait ToProxyTypeOps {
 
 final class ProxyOps(proxy: Proxy) {
   def asSelenium: SeleniumProxy = {
-    val res = new SeleniumProxy()
+    var res = new SeleniumProxy()
       .setProxyType(proxy.proxyType.asSelenium)
-      .setProxyAutoconfigUrl(proxy.proxyAutoconfigUrl)
-      .setFtpProxy(proxy.ftpProxy)
-      .setHttpProxy(proxy.httpProxy)
-      .setSslProxy(proxy.sslProxy)
-      .setSocksProxy(proxy.socksProxy)
-      .setSocksVersion(proxy.socksVersion)
+    res = proxy.proxyAutoconfigUrl.fold(res)(res.setProxyAutoconfigUrl(_))
+    res = proxy.ftpProxy.fold(res)(res.setFtpProxy(_))
+    res = proxy.httpProxy.fold(res)(res.setHttpProxy(_))
+    res = proxy.sslProxy.fold(res)(res.setSslProxy(_))
+    res = proxy.socksProxy.fold(res)(res.setSocksProxy(_))
+    res = proxy.socksVersion.fold(res)(res.setSocksVersion(_))
     proxy.noProxy.foldLeft(res) { case (inter, np) => inter.setNoProxy(np) }
   }
 }

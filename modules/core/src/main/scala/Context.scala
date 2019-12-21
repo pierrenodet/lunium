@@ -33,13 +33,13 @@ case object FullScreen extends WindowState
 
 object ContextType {
 
-  def fromString(string: String): Option[ContextType] =
+  def fromString(string: String): Either[InvalidArgumentException, ContextType] =
     if (string.startsWith("frame")) {
-      Some(Frame(string))
+      Right(Frame(string))
     } else if (string.startsWith("window")) {
-      Some(Window(string))
+      Right(Window(string))
     } else {
-      scala.None
+      Left(new InvalidArgumentException(s"string should start with frame or window but was : $string"))
     }
 
 }
@@ -48,14 +48,14 @@ trait Context[F[_, _]] {
 
   val rect: F[Nothing, Rect]
 
-  def resize(rect: Rect): F[Throwable, Unit]
+  def resize(rect: Rect): F[UnsupportedOperationException, Unit]
 
-  def setState(windowState: WindowState): F[Throwable, Unit]
+  def setState(windowState: WindowState): F[UnsupportedOperationException, Unit]
 
-  def maximize: F[Throwable, Unit] = setState(Maximized)
+  def maximize: F[UnsupportedOperationException, Unit] = setState(Maximized)
 
-  def minimize: F[Throwable, Unit] = setState(Minimized)
+  def minimize: F[UnsupportedOperationException, Unit] = setState(Minimized)
 
-  def fullscreen: F[Throwable, Unit] = setState(FullScreen)
+  def fullscreen: F[UnsupportedOperationException, Unit] = setState(FullScreen)
 
 }

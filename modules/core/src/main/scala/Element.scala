@@ -27,28 +27,28 @@ final case class ElementId(value: String)
 
 trait Element[F[_, _]] extends Search[F] with Fancy[F] {
 
-  def selected: F[Throwable, Boolean]
+  def isSelected: F[StaleElementReferenceException, Boolean]
 
-  def hasAttribute(name: String): F[Throwable, Boolean]
+  def hasAttribute(name: String): F[StaleElementReferenceException, Boolean]
 
-  def attribute(name: String): F[Throwable, String]
+  def attribute(name: String): F[StaleElementReferenceException, String]
 
-  def property(name: String): F[Throwable, String]
+  def property(name: String): F[StaleElementReferenceException, String]
 
-  def css(name: String): F[Throwable, String]
+  def css(name: String): F[StaleElementReferenceException, String]
 
-  def text(whitespace: String = "WS"): F[Throwable, String]
+  def text(whitespace: String = "WS"): F[StaleElementReferenceException, String]
 
-  def name: F[Throwable, String]
+  def name: F[StaleElementReferenceException, String]
 
-  def rect: F[Throwable, Rect]
+  def rect: F[StaleElementReferenceException, Rect]
 
-  def enabled: F[Throwable, Boolean]
+  def enabled: F[StaleElementReferenceException, Boolean]
 
-  def click: F[Throwable, Unit]
+  def click: F[InteractElementException, Unit]
 
-  def clear: F[Throwable, Unit]
+  def clear: F[InteractElementException, Unit]
 
-  def sendKeys(keys: Keys): F[Throwable, Unit]
+  def sendKeys(keys: Keys): F[InteractElementException, Unit]
 
 }

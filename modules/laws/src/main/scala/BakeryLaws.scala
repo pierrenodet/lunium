@@ -19,12 +19,17 @@ package lunium.laws
 import cats.kernel.laws._
 import cats.implicits._
 import cats.Monad
-
+import cats.Bifunctor
+import cats.effect.Sync
 import lunium._
+import cats.data.EitherT
 
+/*
 trait BakeryLaws[F[_, _]] {
   def algebra: Session[F]
-  implicit def M: Monad[F[Throwable, ?]]
+  implicit def M: Monad[F[Throwable,*]]
+  implicit def M2: Monad[F[Nothing,*]]
+  implicit def BF: Bifunctor[F]
 
   import cats.syntax.apply._
   import cats.syntax.flatMap._
@@ -32,29 +37,34 @@ trait BakeryLaws[F[_, _]] {
   import cats.syntax.traverse._
 
   def addFind(cookie: Cookie) =
-    cookie.domain.traverse(d => algebra.to(s"http://$d")) >> algebra.addCookie(cookie) >> algebra.findCookie(
+    cookie.domain.traverse(d => algebra.to(new Url(s"http://$d")).leftMap(_.asInstanceOf[Throwable])) >> algebra.addCookie(cookie).leftMap(_.asInstanceOf[Throwable]) >> algebra.findCookie(
       cookie.name
-    ) <-> M.pure(Some(cookie))
+    ).leftMap(_.asInstanceOf[Throwable]) <-> M.pure(cookie)
 
   def addDeleteAddFind(cookie: Cookie) =
-    cookie.domain.traverse(d => algebra.to(s"http://$d")) >> algebra.addCookie(cookie) >> algebra.deleteCookie(
+    cookie.domain.traverse(d => algebra.to(new Url(s"http://$d")).leftMap(_.asInstanceOf[Throwable])) >> algebra.addCookie(cookie).leftMap(_.asInstanceOf[Throwable]) >> algebra.deleteCookie(
       cookie.name
-    ) >> algebra.addCookie(cookie) >> algebra.findCookie(cookie.name) <-> (cookie.domain.traverse(
-      d => algebra.to(s"http://$d")
-    ) >> algebra.addCookie(cookie) >> algebra.findCookie(cookie.name))
+    ).leftMap(_.asInstanceOf[Throwable]) >> algebra.addCookie(cookie).leftMap(_.asInstanceOf[Throwable]) >> algebra.findCookie(cookie.name).leftMap(_.asInstanceOf[Throwable]) <-> (cookie.domain.traverse(
+      d => algebra.to(new Url(s"http://$d")).leftMap(_.asInstanceOf[Throwable]))
+    ).leftMap(_.asInstanceOf[Throwable]) >> algebra.addCookie(cookie).leftMap(_.asInstanceOf[Throwable]) >> algebra.findCookie(cookie.name).leftMap(_.asInstanceOf[Throwable])
 
-  def deleteFind(cookie: Cookie) =
-    algebra.deleteCookie(cookie.name) >> algebra.findCookie(cookie.name) <-> M.pure(scala.None)
+  def deleteFind(cookie: Cookie) = {
+    val err = for {
+    _ <- algebra.deleteCookie(cookie.name)
+    error <- algebra.findCookie(cookie.name)
+  } yield(error)
+    err  <-> M.pure(NoSuchElementException)
+    }
 
-  //can't add cookie not on domain
 }
 
 object BakeryLaws {
 
-  def apply[F[_, _]](instance: Session[F])(implicit ev: Monad[F[Throwable, ?]]) =
+  def apply[F[_, _]](instance: Session[F])(implicit ev: Monad[F[Throwable, *]]) =
     new BakeryLaws[F] {
       override val algebra                            = instance
-      override implicit val M: Monad[F[Throwable, ?]] = ev
+      override implicit val M: Monad[F[Throwable, *]] = ev
     }
 
 }
+ */

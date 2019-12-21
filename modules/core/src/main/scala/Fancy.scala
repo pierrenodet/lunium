@@ -18,6 +18,6 @@ package lunium
 
 trait Fancy[F[_, _]] {
 
-  def screenshot: F[Throwable, Array[Byte]]
+  def screenshot: F[Nothing, Array[Byte]]
 
 }

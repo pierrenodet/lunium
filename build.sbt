@@ -55,8 +55,8 @@ lazy val lunium = project
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(publish / skip := true)
-  .dependsOn(core, selenium, laws,umbreon,zelenium,examples)
-  .aggregate(core,selenium, laws,umbreon,zelenium,examples)
+  .dependsOn(core,selenium,zelenium,umbreon,tests,examples,laws)
+  .aggregate(core,selenium,zelenium,umbreon,tests,examples,laws)
 
 
 lazy val core = project
@@ -105,6 +105,19 @@ lazy val zelenium = project
     description := "Scalaz and ZIO BiFunctors for the win",
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % "1.0.0-RC17",
+    )
+  )
+
+lazy val tests = project
+  .in(file("modules/tests"))
+  .dependsOn(core,umbreon,zelenium)
+  .enablePlugins(AutomateHeaderPlugin)
+  .settings(commonSettings)
+  .settings(
+    publish / skip := true,
+    libraryDependencies ++= Seq(
+      "org.scalatest" %% "scalatest" % "3.1.0" % Test,
+      "org.scalacheck" %% "scalacheck" % "1.14.1" % Test
     )
   )
 

@@ -48,7 +48,7 @@ trait ToRectOps {
 final class SeleniumRectangeOps(seleniumRectangle: SeleniumRectangle) {
 
   def asLunium =
-    Rect(
+    new Rect(
       seleniumRectangle.x,
       seleniumRectangle.y,
       seleniumRectangle.width,

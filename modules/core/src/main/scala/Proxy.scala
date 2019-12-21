@@ -22,13 +22,48 @@ case object Direct     extends ProxyType
 case object Autodetect extends ProxyType
 case object Manual     extends ProxyType
 
-case class Proxy(
+sealed case class Proxy private[lunium](
   proxyType: ProxyType,
-  proxyAutoconfigUrl: String,
-  ftpProxy: String,
-  httpProxy: String,
-  noProxy: List[String],
-  sslProxy: String,
-  socksProxy: String,
-  socksVersion: Int
+  proxyAutoconfigUrl: Option[String] = scala.None,
+  ftpProxy: Option[String] = scala.None,
+  httpProxy: Option[String] = scala.None,
+  noProxy: List[String] = List.empty,
+  sslProxy: Option[String] = scala.None,
+  socksProxy: Option[String] = scala.None,
+  socksVersion: Option[Int] = scala.None
 )
+
+object Proxy {
+
+  def manual(
+    ftpProxy: String,
+    httpProxy: String,
+    noProxy: List[String],
+    sslProxy: String,
+    socksProxy: String,
+    socksVersion: Int
+  ): Either[InvalidArgumentException, Proxy] =
+    if (socksVersion < 0 || socksVersion > 255) {
+      Left(new InvalidArgumentException(s"socksVersion should be between 0 and 255 but was : $socksVersion"))
+    } else {
+      Right(
+        new Proxy(
+          Manual,
+          ftpProxy = Some(ftpProxy),
+          httpProxy = Some(httpProxy),
+          noProxy = noProxy,
+          sslProxy = Some(sslProxy),
+          socksProxy = Some(socksProxy),
+          socksVersion = Some(socksVersion)
+        )
+      )
+    }
+
+  def pac(proxyAutoconfigUrl: String): Either[InvalidArgumentException, Proxy] =
+    Right(new Proxy(Pac, proxyAutoconfigUrl = Some(proxyAutoconfigUrl)))
+
+  val autodetect: Proxy = new Proxy(Autodetect)
+
+  val direct: Proxy = new Proxy(Direct)
+
+}

@@ -34,13 +34,14 @@ import lunium.laws._
 import lunium.laws.arbitrary._
 import lunium.umbreon._
 
+/*
 trait BakeryTests[F[_, _]] extends Laws {
   def laws: BakeryLaws[F]
 
   def algebra(
     implicit arbEmail: Arbitrary[Cookie],
-    eqFBool: Eq[F[Throwable, Boolean]],
-    eqFOptId: Eq[F[Throwable, Option[Cookie]]]
+    eqFBool: Eq[F[NavigationException, Boolean]],
+    eqFOptId: Eq[F[NavigationException, Cookie]]
   ) =
     new SimpleRuleSet(
       name = "Bakery",
@@ -57,3 +58,4 @@ object BakeryTests {
   }
 
 }
+ */

@@ -33,17 +33,17 @@ object Main extends IOApp {
       .fromCapabilities[IO]("localhost", "4444/wd/hub", Capabilities.lastchromemac)
       .use(session => {
         val res = for {
-          _ <- session.to("http://google.com")
-          _ <- session.deleteCookies
-          _ <- EitherT.liftF {
-                IO {
-                  println(Cookie("n", "a", "/", Some("google.com"), false, false, scala.None).asSelenium.toString())
-                }
-              }
-          //_ <- session.addCookie(Cookie("n","a","/",Some("google.com"),false,false,scala.None))
-          found <- session.findCookie("n")
+          url <- EitherT.fromEither[IO](Url("http://google.com"))
+          _ <- session.to(url)
+          _ <- session.deleteCookies()
+          cookie <- EitherT.fromEither[IO](Cookie("n", "a", "/", Some("google.com"), false, false, scala.None))
+          _ <- session.addCookie(cookie)
+          found <- EitherT[IO,LuniumException,Cookie](session.findCookie("n").value)
         } yield (found)
-        res.map(r => { println(r); ExitCode.Success }).valueOr(_ => ExitCode.Error)
+
+        res
+          .map(r => { println(r); ExitCode.Success })
+          .valueOr(_ => ExitCode.Error)
       })
 
 }

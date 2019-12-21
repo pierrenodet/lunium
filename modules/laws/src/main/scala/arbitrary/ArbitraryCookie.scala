@@ -31,7 +31,7 @@ trait ArbitraryCookie {
     secure   <- arbitrary[Boolean]
     httpOnly <- arbitrary[Boolean]
     expiry   <- posNum[Long]
-  } yield Cookie(name, value, "/", Some("google.com"), true, httpOnly, scala.None)
+  } yield new Cookie(name, value, "/", Some("google.com"), true, httpOnly, scala.None)
 
   implicit final val ArbitraryCookie: Arbitrary[Cookie] = Arbitrary(CookieGen)
 

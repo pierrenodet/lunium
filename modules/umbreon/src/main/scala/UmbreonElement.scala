@@ -22,61 +22,139 @@ import lunium.selenium.implicits._
 import org.openqa.selenium.{ OutputType => SeleniumOutputType, WebElement => SeleniumWebElement }
 import scala.jdk.CollectionConverters._
 import cats.data.EitherT
-
-class UmbreonElement[F[_]: Sync](private[lunium] val element: SeleniumWebElement) extends Element[EitherT[F, ?, ?]] {
+import org.openqa.selenium.{
+  InvalidElementStateException => SeleniumInvalidElementStateException,
+  StaleElementReferenceException => SeleniumStaleElementReferenceException,
+  WebElement => SeleniumWebElement,
+  NoSuchCookieException => SeleniumNoSuchCookieException,
+  InvalidCookieDomainException => SeleniumInvalidCookieDomainException,
+  InvalidSelectorException => SeleniumInvalidSelectorException,
+  NoSuchElementException => SeleniumNoSuchElementException,
+  OutputType => SeleniumOutputType,
+  Rectangle => SeleniumRectangle,
+  TimeoutException => SeleniumTimeoutException,
+  UnsupportedCommandException => SeleniumUnsupportedCommandException
+}
+class UmbreonElement[F[_]: Sync](private[lunium] val wb: SeleniumWebElement) extends Element[EitherT[F, *, *]] {
 
   def findElement(
     elementLocationStrategy: ElementLocationStrategy
-  ): EitherT[F, Throwable, Option[Element[EitherT[F, ?, ?]]]] =
-    EitherT.liftF(
-      Sync[F].delay(
-        Option(element.findElement(elementLocationStrategy.asSelenium)).map(new UmbreonElement[F](_))
-      )
+  ): EitherT[F, SearchElementException, Element[EitherT[F, *, *]]] =
+    EitherT.fromEither(
+      try {
+        Right(UmbreonElement(wb.findElement(elementLocationStrategy.asSelenium)))
+      } catch {
+        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage()))
+        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage()))
+      }
     )
 
   def findElements(
     elementLocationStrategy: ElementLocationStrategy
-  ): EitherT[F, Throwable, List[Element[EitherT[F, ?, ?]]]] =
-    EitherT.liftF(
-      Sync[F].delay(
-        element
-          .findElements(elementLocationStrategy.asSelenium)
-          .asScala
-          .toList
-          .map(new UmbreonElement[F](_))
-      )
+  ): EitherT[F, SearchElementException, List[Element[EitherT[F, *, *]]]] =
+    EitherT.fromEither(
+      try {
+        Right(
+          wb.findElements(elementLocationStrategy.asSelenium)
+            .asScala
+            .toList
+            .map(UmbreonElement(_))
+        )
+      } catch {
+        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage()))
+        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage()))
+      }
     )
 
-  def screenshot: EitherT[F, Throwable, Array[Byte]] =
-    EitherT.liftF(Sync[F].delay(element.getScreenshotAs(SeleniumOutputType.BYTES)))
+  def screenshot: EitherT[F, Nothing, Array[Byte]] = EitherT.pure(wb.getScreenshotAs(SeleniumOutputType.BYTES))
 
-  def selected: EitherT[F, Throwable, Boolean] = EitherT.liftF(Sync[F].delay(element.isSelected))
+  def isSelected: EitherT[F, StaleElementReferenceException, Boolean] =
+    EitherT.fromEither(try {
+      Right(wb.isSelected)
+    } catch {
+      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
+    })
 
-  def attribute(name: String): EitherT[F, Throwable, String] = EitherT.liftF(Sync[F].delay(element.getAttribute(name)))
+  def attribute(name: String): EitherT[F, StaleElementReferenceException, String] =
+    EitherT.fromEither(try {
+      Right(wb.getAttribute(name))
+    } catch {
+      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
+    })
 
-  def hasAttribute(name: String): EitherT[F, Throwable, Boolean] = attribute(name).map(name => Option(name).isDefined)
+  def hasAttribute(name: String): EitherT[F, StaleElementReferenceException, Boolean] =
+    EitherT.fromEither(try {
+      Right(attribute(name)).map(name => Option(name).isDefined)
+    } catch {
+      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
+    })
 
-  def property(name: String): EitherT[F, Throwable, String] = attribute(name)
+  def property(name: String): EitherT[F, StaleElementReferenceException, String] = attribute(name)
 
-  def css(name: String): EitherT[F, Throwable, String] = EitherT.liftF(Sync[F].delay(element.getCssValue(name)))
+  def css(name: String): EitherT[F, StaleElementReferenceException, String] =
+    EitherT.fromEither(try {
+      Right(wb.getCssValue(name))
+    } catch {
+      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
+    })
 
-  def text(whitespace: String = "WS"): EitherT[F, Throwable, String] = EitherT.liftF(Sync[F].delay(element.getText))
+  def text(whitespace: String = "WS"): EitherT[F, StaleElementReferenceException, String] =
+    EitherT.fromEither(try {
+      Right(wb.getText)
+    } catch {
+      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
+    })
 
-  def name: EitherT[F, Throwable, String] = EitherT.liftF(Sync[F].delay(element.getTagName))
+  def name: EitherT[F, StaleElementReferenceException, String] =
+    EitherT.fromEither(try {
+      Right(wb.getTagName)
+    } catch {
+      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
+    })
 
-  def rect: EitherT[F, Throwable, Rect] = EitherT.liftF(Sync[F].delay(element.getRect.asLunium))
+  def rect: EitherT[F, StaleElementReferenceException, Rect] =
+    EitherT.fromEither(try {
+      Right(wb.getRect.asLunium)
+    } catch {
+      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
+    })
 
-  def enabled: EitherT[F, Throwable, Boolean] = EitherT.liftF(Sync[F].delay(element.isEnabled))
+  def enabled: EitherT[F, StaleElementReferenceException, Boolean] =
+    EitherT.fromEither(try {
+      Right(wb.isEnabled)
+    } catch {
+      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
+    })
 
-  def click: EitherT[F, Throwable, Unit] = EitherT.liftF(Sync[F].delay(element.click()))
+  def click: EitherT[F, InteractElementException, Unit] =
+    EitherT.fromEither(try {
+      Right(wb.click())
+    } catch {
+      case e: SeleniumInvalidSelectorException => Left(new ElementClickInterceptedException(e.getMessage()))
+      case e: SeleniumNoSuchElementException   => Left(new ElementNotInteractableException(e.getMessage()))
+      case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage()))
+    })
 
-  def clear: EitherT[F, Throwable, Unit] = EitherT.liftF(Sync[F].delay(element.clear()))
+  def clear: EitherT[F, InteractElementException, Unit] =
+    EitherT.fromEither(try {
+      Right(wb.clear())
+    } catch {
+      case e: SeleniumInvalidSelectorException => Left(new ElementClickInterceptedException(e.getMessage()))
+      case e: SeleniumNoSuchElementException   => Left(new ElementNotInteractableException(e.getMessage()))
+      case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage()))
 
-  def sendKeys(keys: Keys): EitherT[F, Throwable, Unit] =
-    EitherT.liftF(Sync[F].delay(element.sendKeys(keys.asSelenium)))
+    })
 
+  def sendKeys(keys: Keys): EitherT[F, InteractElementException, Unit] =
+    EitherT.fromEither(try {
+      Right(wb.sendKeys(keys.asSelenium))
+    } catch {
+      case e: SeleniumInvalidSelectorException => Left(new ElementClickInterceptedException(e.getMessage()))
+      case e: SeleniumNoSuchElementException   => Left(new ElementNotInteractableException(e.getMessage()))
+      case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage()))
+    })
 }
 
 object UmbreonElement {
-  def apply[F[_]: Sync](element: SeleniumWebElement): Element[EitherT[F, ?, ?]] = new UmbreonElement[F](element)
+  def apply[F[_]: Sync](element: SeleniumWebElement): Element[EitherT[F, *, *]] = new UmbreonElement[F](element)
 }
