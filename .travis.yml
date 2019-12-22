@@ -26,7 +26,7 @@ jobs:
     - stage: compile
       script: sbt compile
     - stage: test
-      script: sbt coverage test coverageReport && bash <(curl -s https://codecov.io/bash)
+      script: chromedriver && sbt coverage test coverageReport && bash <(curl -s https://codecov.io/bash)
     - stage: release
       script: sbt ci-release
 
