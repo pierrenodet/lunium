@@ -51,6 +51,7 @@ class ContextSuite extends AnyFunSuite {
 
   }
 
+  /*
   test("minimize maximize") {
 
     val res = resource.use(
@@ -68,7 +69,6 @@ class ContextSuite extends AnyFunSuite {
 
   }
 
-  /*
   test("set size") {
 
     val input = Rect(40, 40, 500, 500).right.get

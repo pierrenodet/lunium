@@ -2,9 +2,6 @@ language: scala
 
 jdk: openjdk8
 
-scala:
-  - 2.13.1
-
 addons:
   chrome: stable
 
