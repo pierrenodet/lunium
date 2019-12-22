@@ -26,8 +26,8 @@ import lunium.selenium.implicits._
 class CookieSuite extends AnyFunSuite {
 
   val resource: Resource[IO, UmbreonSession[IO]] = UmbreonSession
-    .fromCapabilities[IO]("localhost", "9515", Capabilities.lastchromemac)
-
+    .headlessChrome[IO]
+    
   test("trying to find a cookie that doesn't exist return lunium.NoSuchCookieException") {
 
     val err = resource.use(

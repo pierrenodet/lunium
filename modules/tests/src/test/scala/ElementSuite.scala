@@ -23,11 +23,12 @@ import lunium.umbreon._
 import org.scalatest.funsuite.AnyFunSuite
 import lunium.selenium.implicits._
 import cats.implicits._
+
 class ElementSuite extends AnyFunSuite {
 
   val resource: Resource[IO, UmbreonSession[IO]] = UmbreonSession
-    .fromCapabilities[IO]("localhost", "9515", Capabilities.lastchromemac)
-
+    .headlessChrome[IO]
+    
   val googleUrl    = new Url("https://www.google.com")
   val microsoftUrl = new Url("https://www.microsoft.com")
 

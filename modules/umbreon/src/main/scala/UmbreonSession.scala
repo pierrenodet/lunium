@@ -27,6 +27,8 @@ import lunium.selenium.implicits._
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 import cats.data.EitherT
+import org.openqa.selenium.chrome.{ChromeOptions=>SeleniumChromeOptions,ChromeDriver=>SeleniumChromeDriver}
+
 import org.openqa.selenium.{
   NoSuchCookieException => SeleniumNoSuchCookieException,
   InvalidCookieDomainException => SeleniumInvalidCookieDomainException,
@@ -181,6 +183,15 @@ object UmbreonSession {
     )(
       css => Sync[F].delay(css.rwd.quit())
     )
+
+    def headlessChrome[F[_]: Sync]: Resource[F, UmbreonSession[F]] =
+      Resource.make(
+        Sync[F].delay(
+          new UmbreonSession[F](new SeleniumChromeDriver(new SeleniumChromeOptions().addArguments("--headless")))
+        )
+      )(
+        css => Sync[F].delay(css.rwd.quit())
+      )
 
   /*
   def newTab[F[_]: Sync](

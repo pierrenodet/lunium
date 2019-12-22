@@ -27,7 +27,7 @@ import cats.implicits._
 class ContextSuite extends AnyFunSuite {
 
   val resource: Resource[IO, UmbreonSession[IO]] = UmbreonSession
-    .fromCapabilities[IO]("localhost", "9515", Capabilities.lastchromemac)
+    .headlessChrome[IO]
 
   test("context of new session is default") {
 
@@ -65,22 +65,6 @@ class ContextSuite extends AnyFunSuite {
     )
 
     assert(res.map(e => e.exists { case (rect1, rect2) => rect1 == rect2 }).unsafeRunSync())
-
-  }
-
-  test("set size") {
-
-    val input = Rect(40, 40, 500, 500).right.get
-
-    val res = resource.use(
-      session =>
-        (for {
-          _    <- session.resize(input)
-          rect <- session.rect.leftMap(_.asInstanceOf[LuniumException])
-        } yield (rect)).value
-    )
-
-    assert(res.map(e => e.exists(rect => rect == input)).unsafeRunSync())
 
   }
 

@@ -17,8 +17,6 @@
 package lunium.examples
 
 import cats.effect._
-import cats.syntax.all._
-
 import lunium._
 import lunium.umbreon._
 import lunium.selenium.implicits._
@@ -30,7 +28,7 @@ object Main extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
     UmbreonSession
-      .fromCapabilities[IO]("localhost", "4444/wd/hub", Capabilities.lastchromemac)
+      .fromCapabilities[IO]("localhost", "9515", Capabilities.lastchromemac)
       .use(session => {
         val res = for {
           url    <- EitherT.fromEither[IO](Url("http://google.com"))
@@ -38,7 +36,7 @@ object Main extends IOApp {
           _      <- session.deleteCookies()
           cookie <- EitherT.fromEither[IO](Cookie("n", "a", "/", Some("google.com"), false, false, scala.None))
           _      <- session.addCookie(cookie)
-          found  <- EitherT[IO, LuniumException, Cookie](session.findCookie("n").value)
+          found  <- session.findCookie("n").leftWiden[LuniumException]
         } yield (found)
 
         res
