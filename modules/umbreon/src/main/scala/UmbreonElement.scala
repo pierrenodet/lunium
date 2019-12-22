@@ -35,6 +35,7 @@ import org.openqa.selenium.{
   TimeoutException => SeleniumTimeoutException,
   UnsupportedCommandException => SeleniumUnsupportedCommandException
 }
+
 class UmbreonElement[F[_]: Sync](private[lunium] val wb: SeleniumWebElement) extends Element[EitherT[F, *, *]] {
 
   def findElement(
@@ -75,25 +76,24 @@ class UmbreonElement[F[_]: Sync](private[lunium] val wb: SeleniumWebElement) ext
       case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
     })
 
-  def attribute(name: String): EitherT[F, StaleElementReferenceException, String] =
+  def attribute(name: String): EitherT[F, GetFromElementException, String] =
     EitherT.fromEither(try {
-      Right(wb.getAttribute(name))
+      if (wb.getAttribute(name) == null) Left(new NoSuchAttributeException(s"attribute $name is null"))
+      else Right(wb.getAttribute(name))
     } catch {
       case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
     })
 
   def hasAttribute(name: String): EitherT[F, StaleElementReferenceException, Boolean] =
-    EitherT.fromEither(try {
-      Right(attribute(name)).map(name => Option(name).isDefined)
-    } catch {
-      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
-    })
+    EitherT.liftF(attribute(name).isRight)
 
-  def property(name: String): EitherT[F, StaleElementReferenceException, String] = attribute(name)
+  def property(name: String): EitherT[F, GetFromElementException, String] = attribute(name)
 
-  def css(name: String): EitherT[F, StaleElementReferenceException, String] =
+  def css(name: String): EitherT[F, GetFromElementException, String] =
     EitherT.fromEither(try {
-      Right(wb.getCssValue(name))
+      if (wb.getCssValue(name) == null || wb.getCssValue(name) == "")
+        Left(new NoSuchAttributeException(s"attribute $name is null"))
+      else Right(wb.getAttribute(name))
     } catch {
       case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
     })
@@ -119,7 +119,7 @@ class UmbreonElement[F[_]: Sync](private[lunium] val wb: SeleniumWebElement) ext
       case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
     })
 
-  def enabled: EitherT[F, StaleElementReferenceException, Boolean] =
+  def isEnabled: EitherT[F, StaleElementReferenceException, Boolean] =
     EitherT.fromEither(try {
       Right(wb.isEnabled)
     } catch {
@@ -130,8 +130,8 @@ class UmbreonElement[F[_]: Sync](private[lunium] val wb: SeleniumWebElement) ext
     EitherT.fromEither(try {
       Right(wb.click())
     } catch {
-      case e: SeleniumInvalidSelectorException => Left(new ElementClickInterceptedException(e.getMessage()))
-      case e: SeleniumNoSuchElementException   => Left(new ElementNotInteractableException(e.getMessage()))
+      case e: SeleniumInvalidSelectorException     => Left(new ElementClickInterceptedException(e.getMessage()))
+      case e: SeleniumNoSuchElementException       => Left(new ElementNotInteractableException(e.getMessage()))
       case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage()))
     })
 
@@ -139,8 +139,8 @@ class UmbreonElement[F[_]: Sync](private[lunium] val wb: SeleniumWebElement) ext
     EitherT.fromEither(try {
       Right(wb.clear())
     } catch {
-      case e: SeleniumInvalidSelectorException => Left(new ElementClickInterceptedException(e.getMessage()))
-      case e: SeleniumNoSuchElementException   => Left(new ElementNotInteractableException(e.getMessage()))
+      case e: SeleniumInvalidSelectorException     => Left(new ElementClickInterceptedException(e.getMessage()))
+      case e: SeleniumNoSuchElementException       => Left(new ElementNotInteractableException(e.getMessage()))
       case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage()))
 
     })
@@ -149,8 +149,8 @@ class UmbreonElement[F[_]: Sync](private[lunium] val wb: SeleniumWebElement) ext
     EitherT.fromEither(try {
       Right(wb.sendKeys(keys.asSelenium))
     } catch {
-      case e: SeleniumInvalidSelectorException => Left(new ElementClickInterceptedException(e.getMessage()))
-      case e: SeleniumNoSuchElementException   => Left(new ElementNotInteractableException(e.getMessage()))
+      case e: SeleniumInvalidSelectorException     => Left(new ElementClickInterceptedException(e.getMessage()))
+      case e: SeleniumNoSuchElementException       => Left(new ElementNotInteractableException(e.getMessage()))
       case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage()))
     })
 }

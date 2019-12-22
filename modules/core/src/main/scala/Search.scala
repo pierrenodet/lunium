@@ -16,6 +16,13 @@
 
 package lunium
 
+sealed trait ElementLocationStrategy
+case class CSS(value: String)     extends ElementLocationStrategy
+case class Link(value: String)    extends ElementLocationStrategy
+case class Partial(value: String) extends ElementLocationStrategy
+case class Tag(value: String)     extends ElementLocationStrategy
+case class XPath(value: String)   extends ElementLocationStrategy
+
 trait Search[F[_, _]] {
 
   def findElement(

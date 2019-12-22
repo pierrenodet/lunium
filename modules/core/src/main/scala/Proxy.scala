@@ -22,7 +22,7 @@ case object Direct     extends ProxyType
 case object Autodetect extends ProxyType
 case object Manual     extends ProxyType
 
-sealed case class Proxy private[lunium](
+sealed case class Proxy private[lunium] (
   proxyType: ProxyType,
   proxyAutoconfigUrl: Option[String] = scala.None,
   ftpProxy: Option[String] = scala.None,

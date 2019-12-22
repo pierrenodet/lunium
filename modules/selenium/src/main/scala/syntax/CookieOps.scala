@@ -45,7 +45,7 @@ trait ToCookieOps {
 final class SeleniumCookieOps(seleniumCookie: SeleniumCookie) {
 
   def asLunium: Cookie =
-    new Cookie(
+    Cookie(
       seleniumCookie.getName,
       seleniumCookie.getValue,
       seleniumCookie.getPath,
@@ -53,7 +53,7 @@ final class SeleniumCookieOps(seleniumCookie: SeleniumCookie) {
       seleniumCookie.isSecure,
       seleniumCookie.isHttpOnly,
       Option(seleniumCookie.getExpiry).map(_.getTime)
-    )
+    ).right.get
 
 }
 

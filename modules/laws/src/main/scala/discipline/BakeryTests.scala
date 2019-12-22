@@ -30,8 +30,8 @@ import cats.effect.implicits._
 import cats.effect._
 import cats.effect.laws._
 import lunium._
-import lunium.laws._
-import lunium.laws.arbitrary._
+//import lunium.laws._
+//import lunium.laws.arbitrary._
 import lunium.umbreon._
 
 /*

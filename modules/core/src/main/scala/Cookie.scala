@@ -24,11 +24,11 @@ case class Cookie private[lunium] (
   secure: Boolean = false,
   httpOnly: Boolean = false,
   expiry: Option[Long] = scala.None
-){
+) {
   def copy(
-    name: String=name,
-    value: String=value,
-    path: String =path,
+    name: String = name,
+    value: String = value,
+    path: String = path,
     domain: Option[String] = domain,
     secure: Boolean = secure,
     httpOnly: Boolean = httpOnly,
@@ -43,7 +43,6 @@ case class Cookie private[lunium] (
     expiry
   )
 }
-
 
 object Cookie {
 

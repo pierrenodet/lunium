@@ -114,6 +114,7 @@ lazy val tests = project
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(
+    parallelExecution  := false,
     publish / skip := true,
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.1.0" % Test,

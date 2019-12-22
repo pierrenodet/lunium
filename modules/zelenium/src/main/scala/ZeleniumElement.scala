@@ -117,7 +117,7 @@ class ZeleniumElement(private[lunium] val wb: SeleniumWebElement) extends Elemen
       case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage()))
     })
 
-  def enabled: IO[StaleElementReferenceException, Boolean] =
+  def isEnabled: IO[StaleElementReferenceException, Boolean] =
     IO.fromEither(try {
       Right(wb.isEnabled)
     } catch {
@@ -128,8 +128,8 @@ class ZeleniumElement(private[lunium] val wb: SeleniumWebElement) extends Elemen
     IO.fromEither(try {
       Right(wb.click())
     } catch {
-      case e: SeleniumInvalidSelectorException => Left(new ElementClickInterceptedException(e.getMessage()))
-      case e: SeleniumNoSuchElementException   => Left(new ElementNotInteractableException(e.getMessage()))
+      case e: SeleniumInvalidSelectorException     => Left(new ElementClickInterceptedException(e.getMessage()))
+      case e: SeleniumNoSuchElementException       => Left(new ElementNotInteractableException(e.getMessage()))
       case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage()))
     })
 
@@ -137,8 +137,8 @@ class ZeleniumElement(private[lunium] val wb: SeleniumWebElement) extends Elemen
     IO.fromEither(try {
       Right(wb.clear())
     } catch {
-      case e: SeleniumInvalidSelectorException => Left(new ElementClickInterceptedException(e.getMessage()))
-      case e: SeleniumNoSuchElementException   => Left(new ElementNotInteractableException(e.getMessage()))
+      case e: SeleniumInvalidSelectorException     => Left(new ElementClickInterceptedException(e.getMessage()))
+      case e: SeleniumNoSuchElementException       => Left(new ElementNotInteractableException(e.getMessage()))
       case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage()))
     })
 
@@ -146,8 +146,8 @@ class ZeleniumElement(private[lunium] val wb: SeleniumWebElement) extends Elemen
     IO.fromEither(try {
       Right(wb.sendKeys(keys.asSelenium))
     } catch {
-      case e: SeleniumInvalidSelectorException => Left(new ElementClickInterceptedException(e.getMessage()))
-      case e: SeleniumNoSuchElementException   => Left(new ElementNotInteractableException(e.getMessage()))
+      case e: SeleniumInvalidSelectorException     => Left(new ElementClickInterceptedException(e.getMessage()))
+      case e: SeleniumNoSuchElementException       => Left(new ElementNotInteractableException(e.getMessage()))
       case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage()))
     })
 

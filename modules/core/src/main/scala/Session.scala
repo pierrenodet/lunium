@@ -28,7 +28,7 @@ trait Session[F[_, _]]
     with Bakery[F]
     with Context[F] {
 
-  val timeout: F[Nothing, Timeout]
+  def timeout: F[Nothing, Timeout]
   def setTimeout(timeout: Timeout): F[Nothing, Unit]
 
   def navigate(command: NavigationCommand): F[NavigationException, Unit]
@@ -38,10 +38,10 @@ trait Session[F[_, _]]
   def forward: F[NavigationException, Unit]      = navigate(Forward)
   def refresh: F[NavigationException, Unit]      = navigate(Refresh)
 
-  val url: F[Nothing, String]
-  val title: F[Nothing, String]
+  def url: F[Nothing, String]
+  def title: F[Nothing, String]
 
-  val contexts: F[Nothing, List[ContextType]]
-  val current: F[Nothing, ContextType]
+  def contexts: F[Nothing, List[ContextType]]
+  def current: F[Nothing, ContextType]
 
 }

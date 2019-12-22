@@ -23,8 +23,8 @@ case object Window extends WindowType
 sealed trait ContextType
 case class Window(handle: String, windowType: Option[WindowType] = scala.None) extends ContextType
 case class Frame(id: String)                                                   extends ContextType
-case object Default                                                            extends ContextType
 case object Parent                                                             extends ContextType
+case object Default                                                            extends ContextType
 
 sealed trait WindowState
 case object Maximized  extends WindowState
@@ -46,7 +46,7 @@ object ContextType {
 
 trait Context[F[_, _]] {
 
-  val rect: F[Nothing, Rect]
+  def rect: F[Nothing, Rect]
 
   def resize(rect: Rect): F[UnsupportedOperationException, Unit]
 

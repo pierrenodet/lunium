@@ -75,4 +75,4 @@ class TestElement(private[lunium] val element: SeleniumWebElement) extends Eleme
 object TestElement {
   def apply(element: SeleniumWebElement): Element[Id] = new TestElement(element)
 }
-*/
+ */

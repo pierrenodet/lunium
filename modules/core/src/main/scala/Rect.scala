@@ -16,13 +16,14 @@
 
 package lunium
 
-sealed case class Rect private[lunium] (x: Long, y: Long, width: Long, height: Long)
-{
+sealed case class Rect private[lunium] (x: Long, y: Long, width: Long, height: Long) {
   def copy(
-    x: Long=x, y: Long=y, width: Long=width, height: Long=height
-  ): Either[InvalidArgumentException, Rect] = Rect(x,y,width,height)
+    x: Long = x,
+    y: Long = y,
+    width: Long = width,
+    height: Long = height
+  ): Either[InvalidArgumentException, Rect] = Rect(x, y, width, height)
 }
-
 
 object Rect {
 

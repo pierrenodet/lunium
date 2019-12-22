@@ -26,8 +26,8 @@ import cats.Id
 import lunium._
 import lunium.selenium.implicits._
 //import lunium.laws.TestSession
-import lunium.laws.arbitrary.ArbitraryCookie
-import lunium.laws.discipline.BakeryTests
+//import lunium.laws.arbitrary.ArbitraryCookie
+//import lunium.laws.discipline.BakeryTests
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest._
@@ -52,4 +52,4 @@ class BakerySpecs extends AnyFunSuite with Discipline with ArbitraryCookie with 
    checkAll("Bakery", BakeryTests(ts).algebra)
 
 }
-*/
+ */

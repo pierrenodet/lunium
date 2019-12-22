@@ -72,7 +72,7 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
 
   def screenshot: IO[Nothing, Array[Byte]] = UIO(rwd.getScreenshotAs(SeleniumOutputType.BYTES))
 
-  val timeout: IO[Nothing, Timeout] = UIO.succeed(new Timeout(1))
+  def timeout: IO[Nothing, Timeout] = UIO.succeed(new Timeout(1))
 
   def setTimeout(timeout: Timeout): IO[Nothing, Unit] =
     for {
@@ -101,13 +101,13 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
     }
   }
 
-  val url: IO[Nothing, String]   = UIO.apply(rwd.getCurrentUrl)
-  val title: IO[Nothing, String] = UIO.apply(rwd.getTitle)
+  def url: IO[Nothing, String]   = UIO.apply(rwd.getCurrentUrl)
+  def title: IO[Nothing, String] = UIO.apply(rwd.getTitle)
 
-  val contexts: IO[Nothing, List[ContextType]] =
+  def contexts: IO[Nothing, List[ContextType]] =
     UIO(rwd.getWindowHandles.asScala.toList.flatMap(wh => ContextType.fromString(wh).toOption))
 
-  val current: IO[Nothing, ContextType] = UIO(ContextType.fromString(rwd.getWindowHandle).getOrElse(Default))
+  def current: IO[Nothing, ContextType] = UIO(ContextType.fromString(rwd.getWindowHandle).getOrElse(Default))
 
   def deleteCookies(): IO[Nothing, Unit] = UIO(rwd.manage().deleteAllCookies())
 
@@ -127,6 +127,7 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
       Right(rwd.manage().getCookieNamed(name).asLunium)
     } catch {
       case e: SeleniumNoSuchCookieException => Left(new NoSuchCookieException(e.getMessage()))
+      case e: NoSuchAttributeException      => Left(new NoSuchCookieException(e.getMessage()))
     })
 
   def executeSync(script: Script): IO[Throwable, String] = IO.effect(rwd.executeScript(script.value).toString)
@@ -159,7 +160,7 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
       }
     )
 
-  val rect: IO[Nothing, Rect] =
+  def rect: IO[Nothing, Rect] =
     UIO.apply(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
 
 }

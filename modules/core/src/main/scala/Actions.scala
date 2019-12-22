@@ -16,10 +16,20 @@
 
 package lunium
 
-case class Keys(
+sealed case class Keys private[lunium] (
   pressed: Set[String],
   alt: Boolean = false,
   shift: Boolean = false,
   ctrl: Boolean = false,
   meta: Boolean = false
 )
+
+object Keys {
+  def apply(
+    pressed: Set[String],
+    alt: Boolean = false,
+    shift: Boolean = false,
+    ctrl: Boolean = false,
+    meta: Boolean = false
+  ) = new Keys(pressed, alt, shift, ctrl, meta)
+}

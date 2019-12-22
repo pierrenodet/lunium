@@ -28,7 +28,7 @@ final class KeysOps(keys: Keys) {
     val ctrlSeleniumKey =
       if (keys.ctrl) Some(SeleniumKeys.CONTROL) else Option.empty[SeleniumKeys]
     val metaSeleniumKey    = if (keys.meta) Some(SeleniumKeys.META) else Option.empty[SeleniumKeys]
-    val pressedSeleniumKey = keys.pressed.toSeq.map(SeleniumKeys.valueOf)
+    val pressedSeleniumKey = Some(keys.pressed.reduce(_ + _))
     SeleniumKeys.chord(
       (pressedSeleniumKey ++ metaSeleniumKey ++ ctrlSeleniumKey ++ shiftSeleniumKey ++ altSeleniumKey)
         .map(_.asInstanceOf[CharSequence])

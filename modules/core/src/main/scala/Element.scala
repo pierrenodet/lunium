@@ -16,13 +16,6 @@
 
 package lunium
 
-sealed trait ElementLocationStrategy
-case class CSS(value: String)     extends ElementLocationStrategy
-case class Link(value: String)    extends ElementLocationStrategy
-case class Partial(value: String) extends ElementLocationStrategy
-case class Tag(value: String)     extends ElementLocationStrategy
-case class XPath(value: String)   extends ElementLocationStrategy
-
 final case class ElementId(value: String)
 
 trait Element[F[_, _]] extends Search[F] with Fancy[F] {
@@ -31,11 +24,11 @@ trait Element[F[_, _]] extends Search[F] with Fancy[F] {
 
   def hasAttribute(name: String): F[StaleElementReferenceException, Boolean]
 
-  def attribute(name: String): F[StaleElementReferenceException, String]
+  def attribute(name: String): F[GetFromElementException, String]
 
-  def property(name: String): F[StaleElementReferenceException, String]
+  def property(name: String): F[GetFromElementException, String]
 
-  def css(name: String): F[StaleElementReferenceException, String]
+  def css(name: String): F[GetFromElementException, String]
 
   def text(whitespace: String = "WS"): F[StaleElementReferenceException, String]
 
@@ -43,7 +36,7 @@ trait Element[F[_, _]] extends Search[F] with Fancy[F] {
 
   def rect: F[StaleElementReferenceException, Rect]
 
-  def enabled: F[StaleElementReferenceException, Boolean]
+  def isEnabled: F[StaleElementReferenceException, Boolean]
 
   def click: F[InteractElementException, Unit]
 

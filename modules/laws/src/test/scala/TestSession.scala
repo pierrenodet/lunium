@@ -110,4 +110,4 @@ object TestSession {
   ): TestSession =
     new TestSession(new SeleniumRemoteWebDriver(new URL(s"http://$host:$port"), capabilities.asSelenium))
 }
-*/
+ */

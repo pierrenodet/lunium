@@ -71,7 +71,7 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
 
   def screenshot: EitherT[F, Nothing, Array[Byte]] = EitherT.pure(rwd.getScreenshotAs(SeleniumOutputType.BYTES))
 
-  val timeout: EitherT[F, Nothing, Timeout] = EitherT.pure(new Timeout(1))
+  def timeout: EitherT[F, Nothing, Timeout] = EitherT.pure(new Timeout(1))
 
   def setTimeout(timeout: Timeout): EitherT[F, Nothing, Unit] =
     EitherT.liftF(for {
@@ -100,14 +100,14 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
     }
   }
 
-  val url: EitherT[F, Nothing, String]   = EitherT.pure(rwd.getCurrentUrl)
-  val title: EitherT[F, Nothing, String] = EitherT.pure(rwd.getTitle)
+  def url: EitherT[F, Nothing, String]   = EitherT.pure(rwd.getCurrentUrl)
+  def title: EitherT[F, Nothing, String] = EitherT.pure(rwd.getTitle)
 
-  val contexts: EitherT[F, Nothing, List[ContextType]] =
+  def contexts: EitherT[F, Nothing, List[ContextType]] =
     EitherT.pure(rwd.getWindowHandles.asScala.toList.flatMap(wh => ContextType.fromString(wh).toOption))
 
-  val current: EitherT[F, Nothing, ContextType] =
-    EitherT.pure(ContextType.fromString(rwd.getWindowHandle).getOrElse(Default))
+  def current: EitherT[F, Nothing, ContextType] =
+    EitherT.pure(ContextType.fromString(rwd.getWindowHandle.tail.tail).getOrElse(Default))
 
   def deleteCookies(): EitherT[F, Nothing, Unit] = EitherT.pure(rwd.manage().deleteAllCookies())
 
@@ -126,7 +126,8 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
     EitherT.fromEither(try {
       Right(rwd.manage().getCookieNamed(name).asLunium)
     } catch {
-      case e: SeleniumNoSuchCookieException => Left(new NoSuchCookieException(e.getMessage()))
+      case e: SeleniumNoSuchCookieException  => Left(new NoSuchCookieException(e.getMessage()))
+      case e: java.lang.NullPointerException => Left(new NoSuchCookieException(e.getMessage()))
     })
 
   def executeSync(script: Script): EitherT[F, Throwable, String] =
@@ -161,7 +162,7 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
       }
     )
 
-  val rect: EitherT[F, Nothing, Rect] =
+  def rect: EitherT[F, Nothing, Rect] =
     EitherT.pure(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
 
 }
