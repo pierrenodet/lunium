@@ -68,4 +68,21 @@ class ContextSuite extends AnyFunSuite {
 
   }
 
+  /*
+  test("set size") {
+
+    val input = Rect(40, 40, 500, 500).right.get
+
+    val res = resource.use(
+      session =>
+        (for {
+          _    <- session.resize(input)
+          rect <- session.rect.leftMap(_.asInstanceOf[LuniumException])
+        } yield (rect)).value
+    )
+
+    assert(res.map(e => e.exists(rect => rect == input)).unsafeRunSync())
+
+  }
+ */
 }

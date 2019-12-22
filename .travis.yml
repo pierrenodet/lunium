@@ -9,9 +9,6 @@ scala:
 
 addons:
   chrome: stable
-  apt:
-    packages:
-      - chromium-chromedriver
 
 sudo: required
 
@@ -49,6 +46,11 @@ before_cache:
 
 before_install:
   - git fetch --tags
+  - sudo apt-get update
+  - sudo apt-get install chromium-chromedriver
   - ln --symbolic /usr/lib/chromium-browser/chromedriver "${HOME}/bin/chromedriver"
+  - chromedriver-update
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
+  - sleep 3 # give xvfb some time to start
+  - nohup chromedriver &

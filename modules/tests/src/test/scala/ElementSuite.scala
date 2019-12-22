@@ -27,7 +27,7 @@ import cats.implicits._
 class ElementSuite extends AnyFunSuite {
 
   val resource: Resource[IO, UmbreonSession[IO]] = UmbreonSession
-    .headlessChrome[IO]
+    .fromCapabilities[IO]("localhost", "9515", Capabilities.lastchromemac)
 
   val googleUrl    = new Url("https://www.google.com")
   val microsoftUrl = new Url("https://www.microsoft.com")
@@ -94,7 +94,6 @@ class ElementSuite extends AnyFunSuite {
           element <- session
                       .findElement(XPath("""//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input"""))
                       .leftWiden[LuniumException]
-          //_     <- element.sendKeys(Keys(Set("b","o","n","j","o","u","r"))).leftWiden[LuniumException]
           _   <- element.sendKeys(Keys(Set(input))).leftWiden[LuniumException]
           res <- element.attribute("value").leftWiden[LuniumException]
         } yield (res)).value

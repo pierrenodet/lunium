@@ -24,7 +24,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class NavigationSuite extends AnyFunSuite {
 
   val resource: Resource[IO, UmbreonSession[IO]] = UmbreonSession
-    .headlessChrome[IO]
+    .fromCapabilities[IO]("localhost", "9515", Capabilities.lastchromemac)
 
   val googleUrl = new Url("https://www.google.com")
 
