@@ -27,10 +27,19 @@
   vertical-align: middle;
 }
 
+.nav-footer {
+  background: #3D3D42;
+  color: #3D3D42;
+}
+
+.nav-footer .copyright {
+    color: #FED403;
+}
+
 .nav-footer .separator {
   width: 350px;
+  border-color: #FED403;
   margin: 0 auto;
   margin-bottom: 10px;
   border-top: 0;
 }
-

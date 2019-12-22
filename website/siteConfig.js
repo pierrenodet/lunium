@@ -19,13 +19,13 @@ const siteConfig = {
     { href: repoUrl, label: "GitHub" }
   ],
 
-  headerIcon: "img/umbreon.png",
-  titleIcon: "img/umbreon.png",
+  headerIcon: "img/noctali.png",
+  titleIcon: "img/noctali.png",
   favicon: "img/umbreon.png",
 
   colors: {
-    primaryColor: '#443e8a',
-    secondaryColor: '#2f2b60',
+    primaryColor: '#171717',
+    secondaryColor: '#3D3D42',
   },
 
   copyright: `Copyright © ${new Date().getFullYear()} Pierre Nodet`,
