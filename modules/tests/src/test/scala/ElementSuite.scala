@@ -28,7 +28,7 @@ class ElementSuite extends AnyFunSuite {
 
   val resource: Resource[IO, UmbreonSession[IO]] = UmbreonSession
     .headlessChrome[IO]
-    
+
   val googleUrl    = new Url("https://www.google.com")
   val microsoftUrl = new Url("https://www.microsoft.com")
 

@@ -27,7 +27,7 @@ class CookieSuite extends AnyFunSuite {
 
   val resource: Resource[IO, UmbreonSession[IO]] = UmbreonSession
     .headlessChrome[IO]
-    
+
   test("trying to find a cookie that doesn't exist return lunium.NoSuchCookieException") {
 
     val err = resource.use(

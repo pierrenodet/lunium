@@ -25,7 +25,7 @@ class NavigationSuite extends AnyFunSuite {
 
   val resource: Resource[IO, UmbreonSession[IO]] = UmbreonSession
     .headlessChrome[IO]
-    
+
   val googleUrl = new Url("https://www.google.com")
 
   test("find non existing element return lunium.NoSuchElement") {

@@ -126,8 +126,8 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
     IO.fromEither(try {
       Right(rwd.manage().getCookieNamed(name).asLunium)
     } catch {
-      case e: SeleniumNoSuchCookieException => Left(new NoSuchCookieException(e.getMessage()))
-      case e: java.lang.NullPointerException          => Left(new NoSuchCookieException(e.getMessage()))
+      case e: SeleniumNoSuchCookieException  => Left(new NoSuchCookieException(e.getMessage()))
+      case e: java.lang.NullPointerException => Left(new NoSuchCookieException(e.getMessage()))
     })
 
   def executeSync(script: Script): IO[Throwable, String] = IO.effect(rwd.executeScript(script.value).toString)
