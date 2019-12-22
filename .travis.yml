@@ -8,8 +8,9 @@ scala:
 addons:
   chrome: stable
 
-sudo: required
-
+services:
+  - xvfb
+  
 stages:
   - name: compile
   - name: test
