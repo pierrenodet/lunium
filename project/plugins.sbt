@@ -1,4 +1,4 @@
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.1")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.0.0")
 addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.4.31")
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.2.0")
