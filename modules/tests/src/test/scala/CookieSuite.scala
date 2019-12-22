@@ -17,7 +17,7 @@
 package lunium.tests
 
 import cats.data.EitherT
-import cats.effect.{ IO, Resource }
+import cats.effect.{IO, Resource}
 import lunium._
 import lunium.umbreon._
 import org.scalatest.funsuite.AnyFunSuite
@@ -28,93 +28,75 @@ class CookieSuite extends AnyFunSuite {
   val resource: Resource[IO, UmbreonSession[IO]] = UmbreonSession
     .headlessChrome[IO]
 
-  test("trying to find a cookie that doesn't exist return lunium.NoSuchCookieException") {
+test("trying to find a cookie that doesn't exist return lunium.NoSuchCookieException") {
 
-    val err = resource.use(
-      session =>
-        (for {
-          _   <- session.deleteCookies()
-          res <- session.findCookie("kek")
-        } yield (res)).value
-    )
+  val err = resource.use(session =>
+    (for {
+      _ <- session.deleteCookies()
+      res <- session.findCookie("kek")
+    } yield(res)).value
+  )
 
-    assert(
-      err
-        .unsafeRunSync()
-        .fold({
-          case _: NoSuchCookieException => true
-        }, _ => false)
-    )
+  assert(err.unsafeRunSync().fold({
+    case _: NoSuchCookieException => true}
+  ,_=>false))
 
+}
+
+test("trying to find a cookie that exist return the right cookie name and value") {
+
+  val input = new Cookie("n", "a", "/", Some("google.com"), false, false, scala.None)
+
+  val cookie = resource.use(session =>
+    (for {
+      url <- EitherT.fromEither[IO](Url("http://google.com")).leftMap(_.asInstanceOf[Nothing])
+      _ <- session.to(url).leftMap(_.asInstanceOf[Nothing])
+      _ <- session.deleteCookies()
+      _ <- session.addCookie(input).leftMap(_.asInstanceOf[Nothing])
+      res <- session.findCookie(input.name)
+    } yield(res)).value
+  )
+
+  assert(cookie.unsafeRunSync().fold({
+    case _: NoSuchCookieException => false}
+  , res => (res.name == input.name) && (res.value==input.value)))
+
+}
+
+test("trying to add a cookie on a wrong domain return lunium.InvalidCookieDomainException") {
+
+  val err = resource.use(session =>
+    (for {
+      cookie <- EitherT.fromEither[IO](Cookie("n", "a", "/", Some("kek.kek"), false, false, scala.None)).leftMap(_.asInstanceOf[Nothing])
+      res <- session.addCookie(cookie)
+    } yield(res)).value
+  )
+
+  assert(err.unsafeRunSync().fold({
+    case _: InvalidCookieDomainException => true}
+  ,_=>false))
+
+}
+
+test("get cookies while they are none should be ok") {
+
+  val empty = resource.use(session => {
+    session.deleteCookies()
+    session.cookies.value
   }
+  )
 
-  test("trying to find a cookie that exist return the right cookie name and value") {
+  assert(empty.unsafeRunSync().exists(_.isEmpty))
 
-    val input = new Cookie("n", "a", "/", Some("google.com"), false, false, scala.None)
+}
 
-    val cookie = resource.use(
-      session =>
-        (for {
-          url <- EitherT.fromEither[IO](Url("http://google.com")).leftMap(_.asInstanceOf[Nothing])
-          _   <- session.to(url).leftMap(_.asInstanceOf[Nothing])
-          _   <- session.deleteCookies()
-          _   <- session.addCookie(input).leftMap(_.asInstanceOf[Nothing])
-          res <- session.findCookie(input.name)
-        } yield (res)).value
-    )
+test("cookie conversions should be invariant") {
 
-    assert(
-      cookie
-        .unsafeRunSync()
-        .fold({
-          case _: NoSuchCookieException => false
-        }, res => (res.name == input.name) && (res.value == input.value))
-    )
+  val inputs = List(new Cookie("n", "a", "/", Some("google.com"), false, false, scala.None),
+    new Cookie("n", "a", "/", scala.None, true, false, scala.None))
 
-  }
+  assert(inputs.forall(a => a == a.asSelenium.asLunium))
 
-  test("trying to add a cookie on a wrong domain return lunium.InvalidCookieDomainException") {
-
-    val err = resource.use(
-      session =>
-        (for {
-          cookie <- EitherT
-                     .fromEither[IO](Cookie("n", "a", "/", Some("kek.kek"), false, false, scala.None))
-                     .leftMap(_.asInstanceOf[Nothing])
-          res <- session.addCookie(cookie)
-        } yield (res)).value
-    )
-
-    assert(
-      err
-        .unsafeRunSync()
-        .fold({
-          case _: InvalidCookieDomainException => true
-        }, _ => false)
-    )
-
-  }
-
-  test("get cookies while they are none should be ok") {
-
-    val empty = resource.use(session => {
-      session.deleteCookies()
-      session.cookies.value
-    })
-
-    assert(empty.unsafeRunSync().exists(_.isEmpty))
-
-  }
-
-  test("cookie conversions should be invariant") {
-
-    val inputs = List(
-      new Cookie("n", "a", "/", Some("google.com"), false, false, scala.None),
-      new Cookie("n", "a", "/", scala.None, true, false, scala.None)
-    )
-
-    assert(inputs.forall(a => a == a.asSelenium.asLunium))
-
-  }
+}
 
 }
