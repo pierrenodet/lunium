@@ -28,7 +28,6 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 import cats.data.EitherT
 import org.openqa.selenium.chrome.{ ChromeOptions => SeleniumChromeOptions, ChromeDriver => SeleniumChromeDriver }
-
 import org.openqa.selenium.{
   NoSuchCookieException => SeleniumNoSuchCookieException,
   InvalidCookieDomainException => SeleniumInvalidCookieDomainException,
@@ -39,6 +38,7 @@ import org.openqa.selenium.{
   TimeoutException => SeleniumTimeoutException,
   UnsupportedCommandException => SeleniumUnsupportedCommandException
 }
+
 class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDriver) extends Session[EitherT[F, *, *]] {
 
   def findElement(

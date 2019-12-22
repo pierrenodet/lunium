@@ -53,10 +53,11 @@ lazy val commonSettings = Seq(
 lazy val lunium = project
   .in(file("."))
   .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(ScalaUnidocPlugin)
   .settings(commonSettings)
   .settings(publish / skip := true)
-  .dependsOn(core,selenium,zelenium,umbreon,tests,examples,laws)
-  .aggregate(core,selenium,zelenium,umbreon,tests,examples,laws)
+  .dependsOn(core,selenium,zelenium,umbreon,tests,examples)
+  .aggregate(core,selenium,zelenium,umbreon,tests,examples)
 
 
 lazy val core = project
@@ -122,24 +123,6 @@ lazy val tests = project
     )
   )
 
-lazy val laws = project
-  .in(file("modules/laws"))
-  .dependsOn(core,umbreon,zelenium)
-  .enablePlugins(AutomateHeaderPlugin)
-  .settings(commonSettings)
-  .settings(
-    publish / skip := true,
-    libraryDependencies ++= Seq(
-      "org.typelevel" %% "discipline-core" % "1.0.0",
-      "org.typelevel" %% "cats-laws" % "2.0.0",
-      "org.typelevel" %% "cats-kernel-laws" % "2.0.0",
-      "org.typelevel" %% "cats-effect-laws" % "2.0.0",
-      "org.typelevel" %% "discipline-scalatest" % "1.0.0-RC1" % Test,
-      "org.scalatest" %% "scalatest" % "3.1.0" % Test,
-      "org.scalacheck" %% "scalacheck" % "1.14.1" % Test
-    )
-  )
-
 lazy val examples = project
   .in(file("modules/examples"))
   .dependsOn(core,umbreon,zelenium)
@@ -152,15 +135,16 @@ lazy val examples = project
   )
 
 lazy val docs = project
-  .in(file("modules/docs"))
-  .dependsOn(core)
-  .enablePlugins(AutomateHeaderPlugin)
-  .enablePlugins(MdocPlugin, DocusaurusPlugin,ScalaUnidocPlugin)
+  .in(file("modules/lunium-docs"))
+  .dependsOn(core,umbreon,zelenium)
+  .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
   .settings(commonSettings)
   .settings(
+    moduleName := "lunium-docs",
     skip in publish := true,
     mdocVariables := Map("VERSION" -> version.value),
-    unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(core),
+    mdocIn := new File("modules/docs"),
+    unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(core,umbreon,zelenium),
     target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
     cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
     docusaurusCreateSite := docusaurusCreateSite.dependsOn(unidoc in Compile).value

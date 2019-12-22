@@ -7,6 +7,6 @@
 
 <img alt="Noctali!" align="right" src="noctali.png" width="312" height="312"/>
 
-A retarded attempt to do a zero dependency, tagless and bifunctor based library for WebDrivers.
+A retarded attempt to do a zero dependency, tagless and bifunctor based library for WebDrivers
 
 <p align="center"><a href="https://pierrenodet.github.io/lunium"><B>website</B></a></p>
