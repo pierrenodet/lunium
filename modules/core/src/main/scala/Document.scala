@@ -19,12 +19,34 @@ package lunium
 case class PageSource(value: String)
 
 trait Document[F[_, _]] {
+
   def source: F[Throwable, PageSource]
+
+}
+
+object Document {
+
+  def apply[F[_, _]](implicit instance: Document[F]): Document[F] = instance
+
 }
 
 case class Script(value: String)
 
+sealed trait ExecutionMode
+case object SyncExecution  extends ExecutionMode
+case object AsyncExecution extends ExecutionMode
+
 trait Execution[F[_, _]] {
-  def executeSync(script: Script): F[Throwable, String]
-  def executeAsync(script: Script): F[Throwable, String]
+
+  def executeScript(script: Script, executionMode: ExecutionMode = SyncExecution): F[Throwable, String]
+
+  def executeScriptSync(script: Script): F[Throwable, String]  = executeScript(script, SyncExecution)
+  def executeScriptAsync(script: Script): F[Throwable, String] = executeScript(script, AsyncExecution)
+
+}
+
+object Execution {
+
+  def apply[F[_, _]](implicit instance: Execution[F]): Execution[F] = instance
+
 }

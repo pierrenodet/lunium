@@ -29,13 +29,15 @@ object Main extends IOApp {
       .fromCapabilities[IO]("localhost", "9515", Capabilities.lastchromemac)
       .use(session => {
         val res = for {
-          url    <- EitherT.fromEither[IO](Url("http://google.com"))
-          _      <- session.to(url)
-          _      <- session.deleteCookies()
-          cookie <- EitherT.fromEither[IO](Cookie("n", "a", "/", Some("google.com"), false, false, scala.None))
-          _      <- session.addCookie(cookie)
-          found  <- session.findCookie("n").leftWiden[LuniumException]
-        } yield (found)
+          url <- EitherT.fromEither[IO](Url("http://google.com"))
+          _   <- session.to(url)
+          _   <- session.deleteCookies()
+          cookie <- EitherT.fromEither[IO](
+                     Cookie("n", "a", "/", Some("google.com"), secure = false, httpOnly = false, scala.None)
+                   )
+          _     <- session.addCookie(cookie)
+          found <- session.findCookie("n").leftWiden[LuniumException]
+        } yield found
 
         res
           .map(r => { println(r); ExitCode.Success })

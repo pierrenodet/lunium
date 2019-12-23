@@ -26,11 +26,6 @@ case class Frame(id: String)                                                   e
 case object Parent                                                             extends ContextType
 case object Default                                                            extends ContextType
 
-sealed trait WindowState
-case object Maximized  extends WindowState
-case object Minimized  extends WindowState
-case object FullScreen extends WindowState
-
 object ContextType {
 
   def fromString(string: String): Either[InvalidArgumentException, ContextType] =
@@ -46,16 +41,22 @@ object ContextType {
 
 trait Context[F[_, _]] {
 
-  def rect: F[Nothing, Rect]
-
-  def resize(rect: Rect): F[UnsupportedOperationException, Unit]
+  def rectangle: F[Nothing, Rectangle]
 
   def setState(windowState: WindowState): F[UnsupportedOperationException, Unit]
+
+  def resize(rect: Rectangle): F[UnsupportedOperationException, Unit] = setState(rect)
 
   def maximize: F[UnsupportedOperationException, Unit] = setState(Maximized)
 
   def minimize: F[UnsupportedOperationException, Unit] = setState(Minimized)
 
   def fullscreen: F[UnsupportedOperationException, Unit] = setState(FullScreen)
+
+}
+
+object Context {
+
+  def apply[F[_, _]](implicit instance: Context[F]): Context[F] = instance
 
 }

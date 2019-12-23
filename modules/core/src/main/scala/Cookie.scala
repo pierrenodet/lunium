@@ -69,7 +69,7 @@ object Cookie {
     for {
       domain <- validateDomain(domain)
       expiry <- validateExpiry(expiry)
-    } yield (new Cookie(
+    } yield new Cookie(
       name,
       value,
       path,
@@ -77,7 +77,7 @@ object Cookie {
       secure,
       httpOnly,
       expiry
-    ))
+    )
 
 }
 
@@ -92,5 +92,11 @@ trait Bakery[F[_, _]] {
   def deleteCookie(name: String): F[Nothing, Unit]
 
   def deleteCookies(): F[Nothing, Unit]
+
+}
+
+object Bakery {
+
+  def apply[F[_, _]](implicit instance: Bakery[F]): Bakery[F] = instance
 
 }

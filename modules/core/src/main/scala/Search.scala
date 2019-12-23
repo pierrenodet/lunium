@@ -34,3 +34,9 @@ trait Search[F[_, _]] {
   ): F[SearchElementException, List[Element[F]]]
 
 }
+
+object Search {
+
+  def apply[F[_, _]](implicit instance: Search[F]): Search[F] = instance
+
+}

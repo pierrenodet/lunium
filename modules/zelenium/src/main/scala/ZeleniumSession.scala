@@ -17,9 +17,9 @@
 package lunium.zelenium
 
 import org.openqa.selenium.{
-  NoSuchCookieException => SeleniumNoSuchCookieException,
   InvalidCookieDomainException => SeleniumInvalidCookieDomainException,
   InvalidSelectorException => SeleniumInvalidSelectorException,
+  NoSuchCookieException => SeleniumNoSuchCookieException,
   NoSuchElementException => SeleniumNoSuchElementException,
   OutputType => SeleniumOutputType,
   Rectangle => SeleniumRectangle,
@@ -36,8 +36,6 @@ import lunium._
 import zio._
 import lunium.selenium.implicits._
 
-import scala.util.Try
-
 class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends Session[IO] {
 
   def findElement(
@@ -47,8 +45,8 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
       try {
         Right(ZeleniumElement(rwd.findElement(elementLocationStrategy.asSelenium)))
       } catch {
-        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage()))
-        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage()))
+        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage))
+        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage))
       }
     )
 
@@ -65,8 +63,8 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
             .map(new ZeleniumElement(_))
         )
       } catch {
-        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage()))
-        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage()))
+        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage))
+        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage))
       }
     )
 
@@ -97,11 +95,11 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
         case Refresh    => Right(rwd.navigate().refresh())
       }
     } catch {
-      case e: SeleniumTimeoutException => Left(new TimeoutException(e.getMessage()))
+      case e: SeleniumTimeoutException => Left(new TimeoutException(e.getMessage))
     }
   }
 
-  def url: IO[Nothing, String]   = UIO.apply(rwd.getCurrentUrl)
+  def url: IO[Nothing, Url]      = UIO.apply(new Url(rwd.getCurrentUrl))
   def title: IO[Nothing, String] = UIO.apply(rwd.getTitle)
 
   def contexts: IO[Nothing, List[ContextType]] =
@@ -115,7 +113,7 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
     IO.fromEither(try {
       Right(rwd.manage().addCookie(cookie.asSelenium))
     } catch {
-      case e: SeleniumInvalidCookieDomainException => Left(new InvalidCookieDomainException(e.getMessage()))
+      case e: SeleniumInvalidCookieDomainException => Left(new InvalidCookieDomainException(e.getMessage))
     })
 
   def cookies: IO[Nothing, List[Cookie]] = UIO(rwd.manage().getCookies.asScala.map(_.asLunium).toList)
@@ -126,25 +124,16 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
     IO.fromEither(try {
       Right(rwd.manage().getCookieNamed(name).asLunium)
     } catch {
-      case e: SeleniumNoSuchCookieException  => Left(new NoSuchCookieException(e.getMessage()))
-      case e: java.lang.NullPointerException => Left(new NoSuchCookieException(e.getMessage()))
+      case e: SeleniumNoSuchCookieException  => Left(new NoSuchCookieException(e.getMessage))
+      case e: java.lang.NullPointerException => Left(new NoSuchCookieException(e.getMessage))
     })
 
-  def executeSync(script: Script): IO[Throwable, String] = IO.effect(rwd.executeScript(script.value).toString)
-
-  def executeAsync(script: Script): IO[Throwable, String] = IO.effect(rwd.executeAsyncScript(script.value).toString)
+  def executeScript(script: Script, executionMode: ExecutionMode): IO[Throwable, String] = executionMode match {
+    case SyncExecution  => IO.effect(rwd.executeScript(script.value).toString)
+    case AsyncExecution => IO.effect(rwd.executeAsyncScript(script.value).toString)
+  }
 
   def source: IO[Throwable, PageSource] = IO.effect(PageSource(rwd.getPageSource))
-
-  def resize(rect: Rect): IO[UnsupportedOperationException, Unit] = IO.fromEither {
-    try {
-      rwd.manage().window().setSize(rect.asSeleniumDimension)
-      rwd.manage().window().setPosition(rect.asSeleniumPoint)
-      Right(())
-    } catch {
-      case e: SeleniumUnsupportedCommandException => Left(new UnsupportedOperationException(e.getMessage()))
-    }
-  }
 
   def setState(windowState: WindowState): IO[UnsupportedOperationException, Unit] =
     IO.fromEither(
@@ -152,15 +141,18 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
         windowState match {
           case FullScreen => rwd.manage().window().fullscreen()
           case Maximized  => rwd.manage().window().maximize()
-          case Minimized  => rwd.manage().window().setPosition(new Rect(0, -1000, 0, 0).asSeleniumPoint)
+          case Minimized  => rwd.manage().window().setPosition(new Rectangle(0, -1000, 0, 0).asSeleniumPoint)
+          case rect: Rectangle =>
+            rwd.manage().window().setSize(rect.asSeleniumDimension);
+            rwd.manage().window().setPosition(rect.asSeleniumPoint)
         }
         Right(())
       } catch {
-        case e: SeleniumUnsupportedCommandException => Left(new UnsupportedOperationException(e.getMessage()))
+        case e: SeleniumUnsupportedCommandException => Left(new UnsupportedOperationException(e.getMessage))
       }
     )
 
-  def rect: IO[Nothing, Rect] =
+  def rectangle: IO[Nothing, Rectangle] =
     UIO.apply(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
 
 }
@@ -180,7 +172,7 @@ object ZeleniumSession {
   def newTab(
     zs: ZeleniumSession
   ): Managed[Throwable, ZeleniumSession] =
-    Managed.make(zs.executeSync(Script("window.open()")).map(_ => zs))(
+    Managed.make(zs.executeScriptSync(Script("window.open()")).map(_ => zs))(
       css => UIO.apply(css.rwd.close())
     )
 

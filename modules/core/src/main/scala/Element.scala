@@ -20,7 +20,7 @@ final case class ElementId(value: String)
 
 trait Element[F[_, _]] extends Search[F] with Fancy[F] {
 
-  def isSelected: F[StaleElementReferenceException, Boolean]
+  def selected: F[StaleElementReferenceException, Boolean]
 
   def hasAttribute(name: String): F[StaleElementReferenceException, Boolean]
 
@@ -34,9 +34,9 @@ trait Element[F[_, _]] extends Search[F] with Fancy[F] {
 
   def name: F[StaleElementReferenceException, String]
 
-  def rect: F[StaleElementReferenceException, Rect]
+  def rectangle: F[StaleElementReferenceException, Rectangle]
 
-  def isEnabled: F[StaleElementReferenceException, Boolean]
+  def enabled: F[StaleElementReferenceException, Boolean]
 
   def click: F[InteractElementException, Unit]
 
@@ -44,4 +44,14 @@ trait Element[F[_, _]] extends Search[F] with Fancy[F] {
 
   def sendKeys(keys: Keys): F[InteractElementException, Unit]
 
+}
+
+object Element {
+
+  def apply[F[_, _]](implicit instance: Element[F]): Element[F] = instance
+
+}
+
+class UsableElement[F[_, _]](element: Element[F]) {
+  def use[T](f: Element[F] => T): T = f(element)
 }

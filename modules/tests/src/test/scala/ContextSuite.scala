@@ -31,23 +31,21 @@ class ContextSuite extends AnyFunSuite {
 
   test("context of new session is default") {
 
-    val err = resource.use(
-      session =>
-        (for {
-          res <- session.current
-        } yield (res)).value
-    )
+    val err = resource
+      .use(
+        session =>
+          (for {
+            res <- session.current
+          } yield res).value
+      )
+      .unsafeRunSync()
 
-    assert(
-      err
-        .map(_.exists(_ match {
-          case Parent                     => false
-          case Window(handle, windowType) => true
-          case Frame(id)                  => false
-          case Default                    => false
-        }))
-        .unsafeRunSync()
-    )
+    assert(err.exists(_ match {
+      case Parent       => false
+      case Window(_, _) => true
+      case Frame(_)     => false
+      case Default      => false
+    }))
 
   }
 

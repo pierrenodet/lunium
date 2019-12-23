@@ -32,39 +32,39 @@ class NavigationSuite extends AnyFunSuite {
 
     val err = resource.use(
       session =>
-        (for {
+        for {
           _     <- session.to(googleUrl).value
           error <- session.findElement(CSS(".ban.hot")).value
-        } yield (error))
+        } yield error
     )
 
     assert(
       err
         .unsafeRunSync()
         .fold({
-          case exception: InvalidSelectorException => false
-          case exception: NoSuchElementException   => true
+          case _: InvalidSelectorException => false
+          case _: NoSuchElementException   => true
         }, _ => false)
     )
 
   }
 
-  test("wrong element location strategy return lunium.InvalidSelectorException") {
+  test("wrong element location strategy return InvalidSelectorException") {
 
     val err = resource.use(
       session =>
-        (for {
+        for {
           _     <- session.to(googleUrl).value
           error <- session.findElement(CSS("423432")).value
-        } yield (error))
+        } yield error
     )
 
     assert(
       err
         .unsafeRunSync()
         .fold({
-          case exception: InvalidSelectorException => true
-          case exception: NoSuchElementException   => false
+          case _: InvalidSelectorException => true
+          case _: NoSuchElementException   => false
         }, _ => false)
     )
 
@@ -72,39 +72,35 @@ class NavigationSuite extends AnyFunSuite {
 
   test("doing back without history should not crash") {
 
-    val fine = resource.use(
-      session =>
-        (for {
-          _ <- session.to(googleUrl)
-          _ <- session.back
-          _ <- session.back
-          _ <- session.back
-        } yield ()).value
-    )
+    val fine = resource
+      .use(
+        session =>
+          (for {
+            _ <- session.to(googleUrl)
+            _ <- session.back
+            _ <- session.back
+            _ <- session.back
+          } yield ()).value
+      )
+      .unsafeRunSync()
 
-    assert(
-      fine
-        .unsafeRunSync()
-        .fold({
-          case _: InsecureCertificateException => false
-          case _: TimeoutException             => false
-          case _: HttpUnauthorizedException    => false
-        }, a => true)
-    )
+    assert(fine.isRight)
 
   }
 
   test("going to a website should return the website url used when using url") {
 
-    val url = resource.use(
-      session =>
-        (for {
-          _   <- session.to(googleUrl).value
-          url <- session.url.value
-        } yield (url))
-    )
+    val url = resource
+      .use(
+        session =>
+          for {
+            _   <- session.to(googleUrl).value
+            url <- session.url.value
+          } yield url
+      )
+      .unsafeRunSync()
 
-    assert(url.unsafeRunSync().fold(_ => false, res => res.startsWith(googleUrl.value)))
+    assert(url.exists(_.value.startsWith(googleUrl.value)))
 
   }
 

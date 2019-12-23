@@ -16,13 +16,11 @@
 
 package lunium.tests
 
-import cats.data.EitherT
 import cats.effect._
+import cats.implicits._
 import lunium._
 import lunium.umbreon._
 import org.scalatest.funsuite.AnyFunSuite
-import lunium.selenium.implicits._
-import cats.implicits._
 
 class ElementSuite extends AnyFunSuite {
 
@@ -33,26 +31,26 @@ class ElementSuite extends AnyFunSuite {
   val microsoftUrl = new Url("https://www.microsoft.com")
 
   test(
-    "try to get something out of a element from a previous page should return a lunium.StaleElementReferenceException"
+    "try to get something out of a element from a previous page should return a StaleElementReferenceException"
   ) {
 
-    val err = resource.use(
-      session =>
-        (for {
-          _       <- session.to(googleUrl).leftWiden[LuniumException]
-          element <- session.findElement(XPath("""//*[@id="hplogo"]""")).leftWiden[LuniumException]
-          _       <- session.to(microsoftUrl).leftWiden[LuniumException]
-          res     <- element.attribute("src").leftWiden[LuniumException]
-        } yield (res)).value
-    )
+    val err = resource
+      .use(
+        session =>
+          (for {
+            _       <- session.to(googleUrl).leftWiden[LuniumException]
+            element <- session.findElement(XPath("""//*[@id="hplogo"]""")).leftWiden[LuniumException]
+            _       <- session.to(microsoftUrl).leftWiden[LuniumException]
+            res     <- element.attribute("src").leftWiden[LuniumException]
+          } yield res).value
+      )
+      .unsafeRunSync()
 
     assert(
-      err
-        .unsafeRunSync()
-        .fold(_ match {
-          case _: StaleElementReferenceException => true
-          case _: LuniumException                => false
-        }, _ => false)
+      err.fold(_ match {
+        case _: StaleElementReferenceException => true
+        case _: LuniumException                => false
+      }, _ => false)
     )
 
   }
@@ -61,22 +59,22 @@ class ElementSuite extends AnyFunSuite {
     "try to get a property something out of a element that doesn't exist should return a lunium.NullPointerException"
   ) {
 
-    val err = resource.use(
-      session =>
-        (for {
-          _       <- session.to(googleUrl).leftWiden[LuniumException]
-          element <- session.findElement(XPath("""//*[@id="hplogo"]""")).leftWiden[LuniumException]
-          res     <- element.attribute("dsqdqsd").leftWiden[LuniumException]
-        } yield (res)).value
-    )
+    val err = resource
+      .use(
+        session =>
+          (for {
+            _       <- session.to(googleUrl).leftWiden[LuniumException]
+            element <- session.findElement(XPath("""//*[@id="hplogo"]""")).leftWiden[LuniumException]
+            res     <- element.attribute("dsqdqsd").leftWiden[LuniumException]
+          } yield res).value
+      )
+      .unsafeRunSync()
 
     assert(
-      err
-        .unsafeRunSync()
-        .fold(_ match {
-          case _: NoSuchAttributeException => true
-          case _: LuniumException          => false
-        }, _ => false)
+      err.fold(_ match {
+        case _: NoSuchAttributeException => true
+        case _: LuniumException          => false
+      }, _ => false)
     )
 
   }
@@ -87,23 +85,21 @@ class ElementSuite extends AnyFunSuite {
 
     val input = "bonjour"
 
-    val bonjour = resource.use(
-      session =>
-        (for {
-          _ <- session.to(googleUrl).leftWiden[LuniumException]
-          element <- session
-                      .findElement(XPath("""//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input"""))
-                      .leftWiden[LuniumException]
-          _   <- element.sendKeys(Keys(Set(input))).leftWiden[LuniumException]
-          res <- element.attribute("value").leftWiden[LuniumException]
-        } yield (res)).value
-    )
+    val bonjour = resource
+      .use(
+        session =>
+          (for {
+            _ <- session.to(googleUrl).leftWiden[LuniumException]
+            element <- session
+                        .findElement(XPath("""//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input"""))
+                        .leftWiden[LuniumException]
+            _   <- element.sendKeys(Keys(Set(input))).leftWiden[LuniumException]
+            res <- element.attribute("value").leftWiden[LuniumException]
+          } yield res).value
+      )
+      .unsafeRunSync()
 
-    assert(
-      bonjour
-        .unsafeRunSync()
-        .fold(_ => false, b => b == input)
-    )
+    assert(bonjour.exists(_ == input))
 
   }
 }

@@ -28,21 +28,22 @@ class CookieSuite extends AnyFunSuite {
   val resource: Resource[IO, UmbreonSession[IO]] = UmbreonSession
     .headlessChrome[IO]
 
-  test("trying to find a cookie that doesn't exist return lunium.NoSuchCookieException") {
+  test("trying to find a cookie that doesn't exist return NoSuchCookieException") {
 
-    val err = resource.use(
-      session =>
-        (for {
-          _   <- session.deleteCookies()
-          res <- session.findCookie("kek")
-        } yield (res)).value
-    )
+    val err = resource
+      .use(
+        session =>
+          (for {
+            _   <- session.deleteCookies()
+            res <- session.findCookie("kek")
+          } yield res).value
+      )
+      .unsafeRunSync()
 
     assert(
       err
-        .unsafeRunSync()
-        .fold({
-          case _: NoSuchCookieException => true
+        .fold({ _: NoSuchCookieException =>
+          true
         }, _ => false)
     )
 
@@ -52,44 +53,44 @@ class CookieSuite extends AnyFunSuite {
 
     val input = new Cookie("n", "a", "/", Some("google.com"), false, false, scala.None)
 
-    val cookie = resource.use(
-      session =>
-        (for {
-          url <- EitherT.fromEither[IO](Url("http://google.com")).leftMap(_.asInstanceOf[Nothing])
-          _   <- session.to(url).leftMap(_.asInstanceOf[Nothing])
-          _   <- session.deleteCookies()
-          _   <- session.addCookie(input).leftMap(_.asInstanceOf[Nothing])
-          res <- session.findCookie(input.name)
-        } yield (res)).value
-    )
+    val cookie = resource
+      .use(
+        session =>
+          (for {
+            url <- EitherT.fromEither[IO](Url("http://google.com")).leftMap(_.asInstanceOf[Nothing])
+            _   <- session.to(url).leftMap(_.asInstanceOf[Nothing])
+            _   <- session.deleteCookies()
+            _   <- session.addCookie(input).leftMap(_.asInstanceOf[Nothing])
+            res <- session.findCookie(input.name)
+          } yield res).value
+      )
+      .unsafeRunSync()
 
     assert(
-      cookie
-        .unsafeRunSync()
-        .fold({
-          case _: NoSuchCookieException => false
-        }, res => (res.name == input.name) && (res.value == input.value))
+      cookie.exists(res => (res.name == input.name) && (res.value == input.value))
     )
 
   }
 
-  test("trying to add a cookie on a wrong domain return lunium.InvalidCookieDomainException") {
+  test("trying to add a cookie on a wrong domain return InvalidCookieDomainException") {
 
     val err = resource.use(
       session =>
         (for {
           cookie <- EitherT
-                     .fromEither[IO](Cookie("n", "a", "/", Some("kek.kek"), false, false, scala.None))
+                     .fromEither[IO](
+                       Cookie("n", "a", "/", Some("kek.kek"), secure = false, httpOnly = false, scala.None)
+                     )
                      .leftMap(_.asInstanceOf[Nothing])
           res <- session.addCookie(cookie)
-        } yield (res)).value
+        } yield res).value
     )
 
     assert(
       err
         .unsafeRunSync()
-        .fold({
-          case _: InvalidCookieDomainException => true
+        .fold({ _: InvalidCookieDomainException =>
+          true
         }, _ => false)
     )
 

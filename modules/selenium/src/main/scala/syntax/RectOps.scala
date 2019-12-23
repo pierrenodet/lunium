@@ -19,20 +19,20 @@ package lunium.selenium.syntax
 import org.openqa.selenium.{ Rectangle => SeleniumRectangle, Point => SeleniumPoint, Dimension => SeleniumDimension }
 import lunium._
 
-final class RectOps(rect: Rect) {
+final class RectOps(rect: Rectangle) {
 
   def asSelenium: SeleniumRectangle = rect match {
-    case Rect(x, y, width, height) =>
+    case Rectangle(x, y, width, height) =>
       new SeleniumRectangle(x.toInt, y.toInt, height.toInt, width.toInt)
   }
 
   def asSeleniumPoint: SeleniumPoint = rect match {
-    case Rect(x, y, _, _) =>
+    case Rectangle(x, y, _, _) =>
       new SeleniumPoint(x.toInt, y.toInt)
   }
 
   def asSeleniumDimension: SeleniumDimension = rect match {
-    case Rect(_, _, width, height) =>
+    case Rectangle(_, _, width, height) =>
       new SeleniumDimension(height.toInt, width.toInt)
   }
 
@@ -40,7 +40,7 @@ final class RectOps(rect: Rect) {
 
 trait ToRectOps {
 
-  implicit def toRectOps(rect: Rect): RectOps =
+  implicit def toRectOps(rect: Rectangle): RectOps =
     new RectOps(rect)
 
 }
@@ -48,7 +48,7 @@ trait ToRectOps {
 final class SeleniumRectangeOps(seleniumRectangle: SeleniumRectangle) {
 
   def asLunium =
-    new Rect(
+    new Rectangle(
       seleniumRectangle.x,
       seleniumRectangle.y,
       seleniumRectangle.width,

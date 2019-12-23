@@ -21,3 +21,9 @@ trait Fancy[F[_, _]] {
   def screenshot: F[Nothing, Array[Byte]]
 
 }
+
+object Fancy {
+
+  def apply[F[_, _]](implicit instance: Fancy[F]): Fancy[F] = instance
+
+}

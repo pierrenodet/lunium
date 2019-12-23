@@ -16,22 +16,23 @@
 
 package lunium.umbreon
 
-import org.openqa.selenium.{ OutputType => SeleniumOutputType, Rectangle => SeleniumRectangle }
 import org.openqa.selenium.remote.{ RemoteWebDriver => SeleniumRemoteWebDriver }
 import java.util.concurrent.TimeUnit
 import java.net.URL
+
 import cats.effect._
 import lunium._
 import cats.implicits._
 import lunium.selenium.implicits._
+
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 import cats.data.EitherT
-import org.openqa.selenium.chrome.{ ChromeOptions => SeleniumChromeOptions, ChromeDriver => SeleniumChromeDriver }
+import org.openqa.selenium.chrome.{ ChromeDriver => SeleniumChromeDriver, ChromeOptions => SeleniumChromeOptions }
 import org.openqa.selenium.{
-  NoSuchCookieException => SeleniumNoSuchCookieException,
   InvalidCookieDomainException => SeleniumInvalidCookieDomainException,
   InvalidSelectorException => SeleniumInvalidSelectorException,
+  NoSuchCookieException => SeleniumNoSuchCookieException,
   NoSuchElementException => SeleniumNoSuchElementException,
   OutputType => SeleniumOutputType,
   Rectangle => SeleniumRectangle,
@@ -48,8 +49,8 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
       try {
         Right(UmbreonElement(rwd.findElement(elementLocationStrategy.asSelenium)))
       } catch {
-        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage()))
-        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage()))
+        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage))
+        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage))
       }
     )
 
@@ -66,8 +67,8 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
             .map(new UmbreonElement(_))
         )
       } catch {
-        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage()))
-        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage()))
+        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage))
+        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage))
       }
     )
 
@@ -98,11 +99,11 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
         case Refresh    => Right(rwd.navigate().refresh())
       }
     } catch {
-      case e: SeleniumTimeoutException => Left(new TimeoutException(e.getMessage()))
+      case e: SeleniumTimeoutException => Left(new TimeoutException(e.getMessage))
     }
   }
 
-  def url: EitherT[F, Nothing, String]   = EitherT.pure(rwd.getCurrentUrl)
+  def url: EitherT[F, Nothing, Url]      = EitherT.pure(new Url(rwd.getCurrentUrl))
   def title: EitherT[F, Nothing, String] = EitherT.pure(rwd.getTitle)
 
   def contexts: EitherT[F, Nothing, List[ContextType]] =
@@ -117,7 +118,7 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
     EitherT.fromEither(try {
       Right(rwd.manage().addCookie(cookie.asSelenium))
     } catch {
-      case e: SeleniumInvalidCookieDomainException => Left(new InvalidCookieDomainException(e.getMessage()))
+      case e: SeleniumInvalidCookieDomainException => Left(new InvalidCookieDomainException(e.getMessage))
     })
 
   def cookies: EitherT[F, Nothing, List[Cookie]] = EitherT.pure(rwd.manage().getCookies.asScala.map(_.asLunium).toList)
@@ -128,27 +129,16 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
     EitherT.fromEither(try {
       Right(rwd.manage().getCookieNamed(name).asLunium)
     } catch {
-      case e: SeleniumNoSuchCookieException  => Left(new NoSuchCookieException(e.getMessage()))
-      case e: java.lang.NullPointerException => Left(new NoSuchCookieException(e.getMessage()))
+      case e: SeleniumNoSuchCookieException  => Left(new NoSuchCookieException(e.getMessage))
+      case e: java.lang.NullPointerException => Left(new NoSuchCookieException(e.getMessage))
     })
 
-  def executeSync(script: Script): EitherT[F, Throwable, String] =
-    EitherT.fromEither(Try(rwd.executeScript(script.value).toString).toEither)
-
-  def executeAsync(script: Script): EitherT[F, Throwable, String] =
-    EitherT.fromEither(Try(rwd.executeAsyncScript(script.value).toString).toEither)
+  def executeScript(script: Script, executionMode: ExecutionMode): EitherT[F, Throwable, String] = executionMode match {
+    case SyncExecution  => EitherT.fromEither(Try(rwd.executeScript(script.value).toString).toEither)
+    case AsyncExecution => EitherT.fromEither(Try(rwd.executeAsyncScript(script.value).toString).toEither)
+  }
 
   def source: EitherT[F, Throwable, PageSource] = EitherT.fromEither(Try(PageSource(rwd.getPageSource)).toEither)
-
-  def resize(rect: Rect): EitherT[F, UnsupportedOperationException, Unit] = EitherT.fromEither {
-    try {
-      rwd.manage().window().setSize(rect.asSeleniumDimension)
-      rwd.manage().window().setPosition(rect.asSeleniumPoint)
-      Right(())
-    } catch {
-      case e: SeleniumUnsupportedCommandException => Left(new UnsupportedOperationException(e.getMessage()))
-    }
-  }
 
   def setState(windowState: WindowState): EitherT[F, UnsupportedOperationException, Unit] =
     EitherT.fromEither(
@@ -156,15 +146,18 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
         windowState match {
           case FullScreen => rwd.manage().window().fullscreen()
           case Maximized  => rwd.manage().window().maximize()
-          case Minimized  => rwd.manage().window().setPosition(new Rect(0, -1000, 0, 0).asSeleniumPoint)
+          case Minimized  => rwd.manage().window().setPosition(new Rectangle(0, -1000, 0, 0).asSeleniumPoint)
+          case rect: Rectangle =>
+            rwd.manage().window().setSize(rect.asSeleniumDimension);
+            rwd.manage().window().setPosition(rect.asSeleniumPoint)
         }
         Right(())
       } catch {
-        case e: SeleniumUnsupportedCommandException => Left(new UnsupportedOperationException(e.getMessage()))
+        case e: SeleniumUnsupportedCommandException => Left(new UnsupportedOperationException(e.getMessage))
       }
     )
 
-  def rect: EitherT[F, Nothing, Rect] =
+  def rectangle: EitherT[F, Nothing, Rectangle] =
     EitherT.pure(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
 
 }

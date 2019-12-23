@@ -16,24 +16,29 @@
 
 package lunium
 
-sealed case class Rect private[lunium] (x: Long, y: Long, width: Long, height: Long) {
+sealed trait WindowState
+case object Maximized  extends WindowState
+case object Minimized  extends WindowState
+case object FullScreen extends WindowState
+
+sealed case class Rectangle private[lunium] (x: Long, y: Long, width: Long, height: Long) extends WindowState {
   def copy(
     x: Long = x,
     y: Long = y,
     width: Long = width,
     height: Long = height
-  ): Either[InvalidArgumentException, Rect] = Rect(x, y, width, height)
+  ): Either[InvalidArgumentException, Rectangle] = Rectangle(x, y, width, height)
 }
 
-object Rect {
+object Rectangle {
 
-  def apply(x: Long, y: Long, width: Long, height: Long): Either[InvalidArgumentException, Rect] =
+  def apply(x: Long, y: Long, width: Long, height: Long): Either[InvalidArgumentException, Rectangle] =
     for {
       x      <- validateXY(x, "x")
       y      <- validateXY(y, "y")
       width  <- validateWidthHeight(width, "width")
       height <- validateWidthHeight(height, "height")
-    } yield (new Rect(x, y, width, height))
+    } yield new Rectangle(x, y, width, height)
 
   private def validateXY(value: Long, name: String): Either[InvalidArgumentException, Long] =
     if ((value > -math.pow(2, 31) - 1) && (value < math.pow(2, 31))) Right(value)

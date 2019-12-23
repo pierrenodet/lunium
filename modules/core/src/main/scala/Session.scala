@@ -16,7 +16,7 @@
 
 package lunium
 
-case class SessionStatus(ready: Boolean, message: String)
+final case class SessionStatus(ready: Boolean, message: String)
 
 final case class SessionId(value: String)
 
@@ -38,10 +38,16 @@ trait Session[F[_, _]]
   def forward: F[NavigationException, Unit]      = navigate(Forward)
   def refresh: F[NavigationException, Unit]      = navigate(Refresh)
 
-  def url: F[Nothing, String]
+  def url: F[Nothing, Url]
   def title: F[Nothing, String]
 
   def contexts: F[Nothing, List[ContextType]]
   def current: F[Nothing, ContextType]
+
+}
+
+object Session {
+
+  def apply[F[_, _]](implicit instance: Session[F]): Session[F] = instance
 
 }
