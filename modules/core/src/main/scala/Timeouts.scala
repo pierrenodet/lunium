@@ -77,7 +77,7 @@ object Timeouts {
 trait Timeout[F[_, _]] {
 
   def timeouts: F[Nothing, Timeouts]
-  def setTimeouts(timeout: Timeouts): F[Nothing, Unit]
+  def setTimeouts(timeouts: Timeouts): F[Nothing, Unit]
 
 }
 

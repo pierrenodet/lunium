@@ -16,136 +16,59 @@
 
 package lunium
 
-import lunium.selenium.implicits._
-import org.openqa.selenium.{
-  ElementClickInterceptedException => SeleniumElementClickInterceptedException,
-  ElementNotInteractableException => SeleniumElementNotInteractableException,
-  InvalidElementStateException => SeleniumInvalidElementStateException,
-  InvalidSelectorException => SeleniumInvalidSelectorException,
-  NoSuchElementException => SeleniumNoSuchElementException,
-  OutputType => SeleniumOutputType,
-  StaleElementReferenceException => SeleniumStaleElementReferenceException,
-  WebElement => SeleniumWebElement
-}
+import lunium.selenium._
 import zio._
 
-import scala.jdk.CollectionConverters._
-
-class ZeleniumElement(private[lunium] val wb: SeleniumWebElement) extends Element[IO] {
+class ZeleniumElement(private[lunium] val se: SeleniumElement) extends Element[IO] {
 
   def findElement(
     elementLocationStrategy: ElementLocationStrategy
-  ): IO[SearchElementException, ZeleniumElement] =
-    IO.fromEither(
-      try {
-        Right(ZeleniumElement(wb.findElement(elementLocationStrategy.asSelenium)))
-      } catch {
-        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage))
-        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage))
-      }
-    )
+  ): IO[SearchElementException, Element[IO]] =
+    IO.fromEither(se.findElement(elementLocationStrategy).map(se => new ZeleniumElement(se)))
 
   def findElements(
     elementLocationStrategy: ElementLocationStrategy
-  ): IO[SearchElementException, List[ZeleniumElement]] =
+  ): IO[SearchElementException, List[Element[IO]]] =
     IO.fromEither(
-      try {
-        Right(
-          wb.findElements(elementLocationStrategy.asSelenium)
-            .asScala
-            .toList
-            .map(new ZeleniumElement(_))
-        )
-      } catch {
-        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage))
-        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage))
-      }
+      se.findElements(elementLocationStrategy).map(_.map(se => new ZeleniumElement(se)))
     )
 
-  def screenshot: IO[Nothing, Array[Byte]] = UIO(wb.getScreenshotAs(SeleniumOutputType.BYTES))
+  def screenshot: IO[Nothing, Array[Byte]] = IO.fromEither(se.screenshot)
 
   def selected: IO[StaleElementReferenceException, Boolean] =
-    IO.fromEither(try {
-      Right(wb.isSelected)
-    } catch {
-      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage))
-    })
+    IO.fromEither(se.selected)
 
   def attribute(name: String): IO[StaleElementReferenceException, Option[String]] =
-    IO.fromEither(try {
-      Right(Option(wb.getAttribute(name)))
-    } catch {
-      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage))
-    })
+    IO.fromEither(se.attribute(name))
 
-  def hasAttribute(name: String): IO[StaleElementReferenceException, Boolean] = attribute(name).map(_.isDefined)
+  def hasAttribute(name: String): IO[StaleElementReferenceException, Boolean] =
+    IO.fromEither(se.hasAttribute(name))
 
-  def property(name: String): IO[StaleElementReferenceException, Option[String]] = attribute(name)
+  def property(name: String): IO[StaleElementReferenceException, Option[String]] =
+    IO.fromEither(se.property(name))
 
   def css(name: String): IO[StaleElementReferenceException, Option[String]] =
-    IO.fromEither(try {
-      Right(Option(wb.getCssValue(name)))
-    } catch {
-      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage))
-    })
+    IO.fromEither(se.css(name))
 
   def text(whitespace: String = "WS"): IO[StaleElementReferenceException, String] =
-    IO.fromEither(try {
-      Right(wb.getText)
-    } catch {
-      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage))
-    })
+    IO.fromEither(se.text(whitespace))
 
   def name: IO[StaleElementReferenceException, String] =
-    IO.fromEither(try {
-      Right(wb.getTagName)
-    } catch {
-      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage))
-    })
+    IO.fromEither(se.name)
 
   def rectangle: IO[StaleElementReferenceException, Rectangle] =
-    IO.fromEither(try {
-      Right(wb.getRect.asLunium)
-    } catch {
-      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage))
-    })
+    IO.fromEither(se.rectangle)
 
   def enabled: IO[StaleElementReferenceException, Boolean] =
-    IO.fromEither(try {
-      Right(wb.isEnabled)
-    } catch {
-      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage))
-    })
+    IO.fromEither(se.enabled)
 
   def click: IO[InteractElementException, Unit] =
-    IO.fromEither(try {
-      Right(wb.click())
-    } catch {
-      case e: SeleniumElementClickInterceptedException => Left(new ElementClickInterceptedException(e.getMessage))
-      case e: SeleniumElementNotInteractableException  => Left(new ElementNotInteractableException(e.getMessage))
-      case e: SeleniumInvalidElementStateException     => Left(new InvalidElementStateException(e.getMessage))
-    })
+    IO.fromEither(se.click)
 
   def clear: IO[InteractElementException, Unit] =
-    IO.fromEither(try {
-      Right(wb.clear())
-    } catch {
-      case e: SeleniumElementClickInterceptedException => Left(new ElementClickInterceptedException(e.getMessage))
-      case e: SeleniumElementNotInteractableException  => Left(new ElementNotInteractableException(e.getMessage))
-      case e: SeleniumInvalidElementStateException     => Left(new InvalidElementStateException(e.getMessage))
-    })
+    IO.fromEither(se.clear)
 
   def sendKeys(keys: Keys): IO[InteractElementException, Unit] =
-    IO.fromEither(try {
-      Right(wb.sendKeys(keys.asSelenium))
-    } catch {
-      case e: SeleniumElementClickInterceptedException => Left(new ElementClickInterceptedException(e.getMessage))
-      case e: SeleniumElementNotInteractableException  => Left(new ElementNotInteractableException(e.getMessage))
-      case e: SeleniumInvalidElementStateException     => Left(new InvalidElementStateException(e.getMessage))
-    })
+    IO.fromEither(se.sendKeys(keys))
 
-}
-
-object ZeleniumElement {
-  def apply(element: SeleniumWebElement): ZeleniumElement = new ZeleniumElement(element)
 }

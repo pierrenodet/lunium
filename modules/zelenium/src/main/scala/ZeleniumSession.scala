@@ -16,173 +16,78 @@
 
 package lunium.zelenium
 
-import org.openqa.selenium.{
-  NoAlertPresentException => SeleniumNoAlertPresentException,
-  InvalidCookieDomainException => SeleniumInvalidCookieDomainException,
-  InvalidSelectorException => SeleniumInvalidSelectorException,
-  NoSuchCookieException => SeleniumNoSuchCookieException,
-  NoSuchElementException => SeleniumNoSuchElementException,
-  OutputType => SeleniumOutputType,
-  Rectangle => SeleniumRectangle,
-  TimeoutException => SeleniumTimeoutException,
-  UnsupportedCommandException => SeleniumUnsupportedCommandException
-}
-import org.openqa.selenium.remote.{ RemoteWebDriver => SeleniumRemoteWebDriver }
-import java.util.concurrent.TimeUnit
-
-import scala.jdk.CollectionConverters._
 import java.net.URL
 
 import lunium._
-import zio._
+import lunium.selenium._
 import lunium.selenium.implicits._
+import org.openqa.selenium.remote.{ RemoteWebDriver => SeleniumRemoteWebDriver }
+import zio._
 
-class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends Session[IO] {
+class ZeleniumSession(private[lunium] val ss: SeleniumSession) extends Session[IO] {
 
   def findElement(
     elementLocationStrategy: ElementLocationStrategy
-  ): IO[SearchElementException, ZeleniumElement] =
-    IO.fromEither(
-      try {
-        Right(ZeleniumElement(rwd.findElement(elementLocationStrategy.asSelenium)))
-      } catch {
-        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage))
-        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage))
-      }
-    )
+  ): IO[SearchElementException, Element[IO]] =
+    IO.fromEither(ss.findElement(elementLocationStrategy).map(se => new ZeleniumElement(se)))
 
   def findElements(
     elementLocationStrategy: ElementLocationStrategy
-  ): IO[SearchElementException, List[ZeleniumElement]] =
-    IO.fromEither(
-      try {
-        Right(
-          rwd
-            .findElements(elementLocationStrategy.asSelenium)
-            .asScala
-            .toList
-            .map(new ZeleniumElement(_))
-        )
-      } catch {
-        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage))
-        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage))
-      }
-    )
+  ): IO[SearchElementException, List[Element[IO]]] =
+    IO.fromEither(ss.findElements(elementLocationStrategy).map(_.map(se => new ZeleniumElement(se))))
 
-  def screenshot: IO[Nothing, Array[Byte]] = UIO(rwd.getScreenshotAs(SeleniumOutputType.BYTES))
+  def screenshot: IO[Nothing, Array[Byte]] = IO.fromEither(ss.screenshot)
 
-  def timeouts: IO[Nothing, Timeouts] = UIO.succeed(new Timeouts(1))
+  def timeouts: IO[Nothing, Timeouts] = IO.fromEither(ss.timeouts)
 
-  def setTimeouts(timeout: Timeouts): IO[Nothing, Unit] =
-    for {
-      _ <- UIO(
-            rwd.manage.timeouts.implicitlyWait(timeout.implicitWait, TimeUnit.MILLISECONDS)
-          )
-      _ <- UIO(
-            rwd.manage.timeouts.pageLoadTimeout(timeout.pageLoad, TimeUnit.MILLISECONDS)
-          )
-      _ <- UIO(
-            rwd.manage.timeouts
-              .setScriptTimeout(timeout.script.getOrElse(-1), TimeUnit.MILLISECONDS)
-          )
-    } yield ()
+  def setTimeouts(timeouts: Timeouts): IO[Nothing, Unit] =
+    IO.fromEither(ss.setTimeouts(timeouts))
 
-  def navigate(command: NavigationCommand): IO[NavigationException, Unit] = IO.fromEither {
-    try {
-      command match {
-        case Forward    => Right(rwd.navigate().forward())
-        case Url(value) => Right(rwd.navigate().to(value))
-        case Back       => Right(rwd.navigate().back())
-        case Refresh    => Right(rwd.navigate().refresh())
-      }
-    } catch {
-      case e: SeleniumTimeoutException => Left(new TimeoutException(e.getMessage))
-    }
-  }
+  def navigate(navigationCommand: NavigationCommand): IO[NavigationException, Unit] =
+    IO.fromEither(ss.navigate(navigationCommand))
 
-  def url: IO[Nothing, Url]      = UIO.apply(new Url(rwd.getCurrentUrl))
-  def title: IO[Nothing, String] = UIO.apply(rwd.getTitle)
+  def url: IO[Nothing, Url]      = IO.fromEither(ss.url)
+  def title: IO[Nothing, String] = IO.fromEither(ss.title)
 
   def contexts: IO[Nothing, List[ContextType]] =
-    UIO(rwd.getWindowHandles.asScala.toList.flatMap(wh => ContextType.fromString(wh).toOption))
+    IO.fromEither(ss.contexts)
 
-  def current: IO[Nothing, ContextType] = UIO(ContextType.fromString(rwd.getWindowHandle.tail.tail).getOrElse(Default))
+  def current: IO[Nothing, ContextType] =
+    IO.fromEither(ss.current)
 
-  def deleteCookies(): IO[Nothing, Unit] = UIO(rwd.manage().deleteAllCookies())
+  def deleteCookies(): IO[Nothing, Unit] = IO.fromEither(ss.deleteCookies())
 
   def addCookie(cookie: Cookie): IO[InvalidCookieDomainException, Unit] =
-    IO.fromEither(try {
-      Right(rwd.manage().addCookie(cookie.asSelenium))
-    } catch {
-      case e: SeleniumInvalidCookieDomainException => Left(new InvalidCookieDomainException(e.getMessage))
-    })
+    IO.fromEither(ss.addCookie(cookie))
 
-  def cookies: IO[Nothing, List[Cookie]] = UIO(rwd.manage().getCookies.asScala.map(_.asLunium).toList)
+  def cookies: IO[Nothing, List[Cookie]] = IO.fromEither(ss.cookies)
 
-  def deleteCookie(name: String): IO[Nothing, Unit] = UIO(rwd.manage().deleteAllCookies())
+  def deleteCookie(name: String): IO[Nothing, Unit] = IO.fromEither(ss.deleteCookie(name))
 
   def findCookie(name: String): IO[NoSuchCookieException, Cookie] =
-    IO.fromEither(try {
-      Right(rwd.manage().getCookieNamed(name).asLunium)
-    } catch {
-      case e: SeleniumNoSuchCookieException  => Left(new NoSuchCookieException(e.getMessage))
-      case e: java.lang.NullPointerException => Left(new NoSuchCookieException(e.getMessage))
-    })
+    IO.fromEither(ss.findCookie(name))
 
-  def executeScript(script: Script, executionMode: ExecutionMode): IO[Throwable, String] = executionMode match {
-    case SyncExecution  => IO.effect(rwd.executeScript(script.value).toString)
-    case AsyncExecution => IO.effect(rwd.executeAsyncScript(script.value).toString)
-  }
+  def executeScript(script: Script, executionMode: ExecutionMode): IO[Throwable, String] =
+    IO.fromEither(ss.executeScript(script, executionMode))
 
-  def source: IO[Throwable, PageSource] = IO.effect(PageSource(rwd.getPageSource))
+  def source: IO[Throwable, PageSource] = IO.fromEither(ss.source)
 
   def setState(windowState: WindowState): IO[UnsupportedOperationException, Unit] =
-    IO.fromEither(
-      try {
-        windowState match {
-          case FullScreen => rwd.manage().window().fullscreen()
-          case Maximized  => rwd.manage().window().maximize()
-          case Minimized  => rwd.manage().window().setPosition(new Rectangle(0, -1000, 0, 0).asSeleniumPoint)
-          case rect: Rectangle =>
-            rwd.manage().window().setSize(rect.asSeleniumDimension)
-            rwd.manage().window().setPosition(rect.asSeleniumPoint)
-        }
-        Right(())
-      } catch {
-        case e: SeleniumUnsupportedCommandException => Left(new UnsupportedOperationException(e.getMessage))
-      }
-    )
+    IO.fromEither(ss.setState(windowState))
 
-  def rectangle: IO[Nothing, Rectangle] =
-    UIO.apply(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
+  def rectangle: IO[Nothing, Rectangle] = IO.fromEither(ss.rectangle)
 
   def dismiss: IO[NoSuchAlertException, Unit] =
-    IO.fromEither(try {
-      Right(rwd.switchTo().alert().dismiss())
-    } catch {
-      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
-    })
+    IO.fromEither(ss.dismiss)
 
   def accept: IO[NoSuchAlertException, Unit] =
-    IO.fromEither(try {
-      Right(rwd.switchTo().alert().accept())
-    } catch {
-      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
-    })
+    IO.fromEither(ss.accept)
 
   def alertText: IO[NoSuchAlertException, Option[String]] =
-    IO.fromEither(try {
-      Right(Option(rwd.switchTo().alert().getText))
-    } catch {
-      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
-    })
+    IO.fromEither(ss.alertText)
 
   def setAlertText(text: String): IO[SendAlertTextException, Unit] =
-    IO.fromEither(try {
-      Right(rwd.switchTo().alert().sendKeys(text))
-    } catch {
-      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
-    })
+    IO.fromEither(ss.setAlertText(text))
 
 }
 
@@ -194,15 +99,17 @@ object ZeleniumSession {
   ): Managed[Throwable, ZeleniumSession] =
     Managed.make(
       IO.effect(
-        new ZeleniumSession(new SeleniumRemoteWebDriver(new URL(s"http://$host:$port"), capabilities.asSelenium))
+        new ZeleniumSession(
+          new SeleniumSession(new SeleniumRemoteWebDriver(new URL(s"http://$host:$port"), capabilities.asSelenium))
+        )
       )
-    )(css => UIO.apply(css.rwd.quit()))
+    )(css => UIO.apply(css.ss.rwd.quit()))
 
   def newTab(
     zs: ZeleniumSession
   ): Managed[Throwable, ZeleniumSession] =
     Managed.make(zs.executeScriptSync(Script("window.open()")).map(_ => zs))(
-      css => UIO.apply(css.rwd.close())
+      css => UIO.apply(css.ss.rwd.close())
     )
 
   def fromContextType(
@@ -214,14 +121,14 @@ object ZeleniumSession {
 
     def switchTo(contextType: ContextType, zs: ZeleniumSession): Task[SeleniumRemoteWebDriver] =
       IO.effect(contextType match {
-        case Default           => zs.rwd.switchTo.defaultContent().asInstanceOf[SeleniumRemoteWebDriver]
-        case Frame(id)         => zs.rwd.switchTo.frame(id).asInstanceOf[SeleniumRemoteWebDriver]
-        case Parent            => zs.rwd.switchTo.parentFrame().asInstanceOf[SeleniumRemoteWebDriver]
-        case Window(handle, _) => zs.rwd.switchTo.window(handle).asInstanceOf[SeleniumRemoteWebDriver]
+        case Default           => zs.ss.rwd.switchTo.defaultContent().asInstanceOf[SeleniumRemoteWebDriver]
+        case Frame(id)         => zs.ss.rwd.switchTo.frame(id).asInstanceOf[SeleniumRemoteWebDriver]
+        case Parent            => zs.ss.rwd.switchTo.parentFrame().asInstanceOf[SeleniumRemoteWebDriver]
+        case Window(handle, _) => zs.ss.rwd.switchTo.window(handle).asInstanceOf[SeleniumRemoteWebDriver]
       })
 
     Managed.make(switchTo(contextType, zs).map(_ => zs))(zs => {
-      zs.rwd.close()
+      zs.ss.rwd.close()
       fcct.succeedLazy(cct => switchTo(cct, zs))
     })
   }

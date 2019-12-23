@@ -16,178 +16,80 @@
 
 package lunium.umbreon
 
-import org.openqa.selenium.remote.{ RemoteWebDriver => SeleniumRemoteWebDriver }
-import java.util.concurrent.TimeUnit
 import java.net.URL
 
+import cats.data.EitherT
 import cats.effect._
 import lunium._
-import cats.implicits._
+import lunium.selenium._
 import lunium.selenium.implicits._
-
-import scala.jdk.CollectionConverters._
-import scala.util.Try
-import cats.data.EitherT
 import org.openqa.selenium.chrome.{ ChromeDriver => SeleniumChromeDriver, ChromeOptions => SeleniumChromeOptions }
-import org.openqa.selenium.{
-  NoAlertPresentException => SeleniumNoAlertPresentException,
-  InvalidCookieDomainException => SeleniumInvalidCookieDomainException,
-  InvalidSelectorException => SeleniumInvalidSelectorException,
-  NoSuchCookieException => SeleniumNoSuchCookieException,
-  NoSuchElementException => SeleniumNoSuchElementException,
-  OutputType => SeleniumOutputType,
-  Rectangle => SeleniumRectangle,
-  TimeoutException => SeleniumTimeoutException,
-  UnsupportedCommandException => SeleniumUnsupportedCommandException
-}
+import org.openqa.selenium.remote.{ RemoteWebDriver => SeleniumRemoteWebDriver }
 
-class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDriver) extends Session[EitherT[F, *, *]] {
+class UmbreonSession[F[_]: Sync](private[lunium] val ss: SeleniumSession) extends Session[EitherT[F, *, *]] {
 
   def findElement(
     elementLocationStrategy: ElementLocationStrategy
   ): EitherT[F, SearchElementException, Element[EitherT[F, *, *]]] =
-    EitherT.fromEither(
-      try {
-        Right(UmbreonElement(rwd.findElement(elementLocationStrategy.asSelenium)))
-      } catch {
-        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage))
-        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage))
-      }
-    )
+    EitherT.fromEither(ss.findElement(elementLocationStrategy).map(se => new UmbreonElement[F](se)))
 
   def findElements(
     elementLocationStrategy: ElementLocationStrategy
   ): EitherT[F, SearchElementException, List[Element[EitherT[F, *, *]]]] =
-    EitherT.fromEither(
-      try {
-        Right(
-          rwd
-            .findElements(elementLocationStrategy.asSelenium)
-            .asScala
-            .toList
-            .map(new UmbreonElement(_))
-        )
-      } catch {
-        case e: SeleniumInvalidSelectorException => Left(new InvalidSelectorException(e.getMessage))
-        case e: SeleniumNoSuchElementException   => Left(new NoSuchElementException(e.getMessage))
-      }
-    )
+    EitherT.fromEither(ss.findElements(elementLocationStrategy).map(_.map(se => new UmbreonElement[F](se))))
 
-  def screenshot: EitherT[F, Nothing, Array[Byte]] = EitherT.pure(rwd.getScreenshotAs(SeleniumOutputType.BYTES))
+  def screenshot: EitherT[F, Nothing, Array[Byte]] = EitherT.fromEither(ss.screenshot)
 
-  def timeouts: EitherT[F, Nothing, Timeouts] = EitherT.pure(new Timeouts(1))
+  def timeouts: EitherT[F, Nothing, Timeouts] = EitherT.fromEither(ss.timeouts)
 
-  def setTimeouts(timeout: Timeouts): EitherT[F, Nothing, Unit] =
-    EitherT.liftF(for {
-      _ <- Sync[F].delay(
-            rwd.manage.timeouts.implicitlyWait(timeout.implicitWait, TimeUnit.MILLISECONDS)
-          )
-      _ <- Sync[F].delay(
-            rwd.manage.timeouts.pageLoadTimeout(timeout.pageLoad, TimeUnit.MILLISECONDS)
-          )
-      _ <- Sync[F].delay(
-            rwd.manage.timeouts
-              .setScriptTimeout(timeout.script.getOrElse(-1), TimeUnit.MILLISECONDS)
-          )
-    } yield ())
+  def setTimeouts(timeouts: Timeouts): EitherT[F, Nothing, Unit] =
+    EitherT.fromEither(ss.setTimeouts(timeouts))
 
-  def navigate(command: NavigationCommand): EitherT[F, NavigationException, Unit] = EitherT.fromEither {
-    try {
-      command match {
-        case Forward    => Right(rwd.navigate().forward())
-        case Url(value) => Right(rwd.navigate().to(value))
-        case Back       => Right(rwd.navigate().back())
-        case Refresh    => Right(rwd.navigate().refresh())
-      }
-    } catch {
-      case e: SeleniumTimeoutException => Left(new TimeoutException(e.getMessage))
-    }
-  }
+  def navigate(navigationCommand: NavigationCommand): EitherT[F, NavigationException, Unit] =
+    EitherT.fromEither(ss.navigate(navigationCommand))
 
-  def url: EitherT[F, Nothing, Url]      = EitherT.pure(new Url(rwd.getCurrentUrl))
-  def title: EitherT[F, Nothing, String] = EitherT.pure(rwd.getTitle)
+  def url: EitherT[F, Nothing, Url]      = EitherT.fromEither(ss.url)
+  def title: EitherT[F, Nothing, String] = EitherT.fromEither(ss.title)
 
   def contexts: EitherT[F, Nothing, List[ContextType]] =
-    EitherT.pure(rwd.getWindowHandles.asScala.toList.flatMap(wh => ContextType.fromString(wh).toOption))
+    EitherT.fromEither(ss.contexts)
 
   def current: EitherT[F, Nothing, ContextType] =
-    EitherT.pure(ContextType.fromString(rwd.getWindowHandle.tail.tail).getOrElse(Default))
+    EitherT.fromEither(ss.current)
 
-  def deleteCookies(): EitherT[F, Nothing, Unit] = EitherT.pure(rwd.manage().deleteAllCookies())
+  def deleteCookies(): EitherT[F, Nothing, Unit] = EitherT.fromEither(ss.deleteCookies())
 
   def addCookie(cookie: Cookie): EitherT[F, InvalidCookieDomainException, Unit] =
-    EitherT.fromEither(try {
-      Right(rwd.manage().addCookie(cookie.asSelenium))
-    } catch {
-      case e: SeleniumInvalidCookieDomainException => Left(new InvalidCookieDomainException(e.getMessage))
-    })
+    EitherT.fromEither(ss.addCookie(cookie))
 
-  def cookies: EitherT[F, Nothing, List[Cookie]] = EitherT.pure(rwd.manage().getCookies.asScala.map(_.asLunium).toList)
+  def cookies: EitherT[F, Nothing, List[Cookie]] = EitherT.fromEither(ss.cookies)
 
-  def deleteCookie(name: String): EitherT[F, Nothing, Unit] = EitherT.pure(rwd.manage().deleteAllCookies())
+  def deleteCookie(name: String): EitherT[F, Nothing, Unit] = EitherT.fromEither(ss.deleteCookie(name))
 
   def findCookie(name: String): EitherT[F, NoSuchCookieException, Cookie] =
-    EitherT.fromEither(try {
-      Right(rwd.manage().getCookieNamed(name).asLunium)
-    } catch {
-      case e: SeleniumNoSuchCookieException  => Left(new NoSuchCookieException(e.getMessage))
-      case e: java.lang.NullPointerException => Left(new NoSuchCookieException(e.getMessage))
-    })
+    EitherT.fromEither(ss.findCookie(name))
 
-  def executeScript(script: Script, executionMode: ExecutionMode): EitherT[F, Throwable, String] = executionMode match {
-    case SyncExecution  => EitherT.fromEither(Try(rwd.executeScript(script.value).toString).toEither)
-    case AsyncExecution => EitherT.fromEither(Try(rwd.executeAsyncScript(script.value).toString).toEither)
-  }
+  def executeScript(script: Script, executionMode: ExecutionMode): EitherT[F, Throwable, String] =
+    EitherT.fromEither(ss.executeScript(script, executionMode))
 
-  def source: EitherT[F, Throwable, PageSource] = EitherT.fromEither(Try(PageSource(rwd.getPageSource)).toEither)
+  def source: EitherT[F, Throwable, PageSource] = EitherT.fromEither(ss.source)
 
   def setState(windowState: WindowState): EitherT[F, UnsupportedOperationException, Unit] =
-    EitherT.fromEither(
-      try {
-        windowState match {
-          case FullScreen => rwd.manage().window().fullscreen()
-          case Maximized  => rwd.manage().window().maximize()
-          case Minimized  => rwd.manage().window().setPosition(new Rectangle(0, -1000, 0, 0).asSeleniumPoint)
-          case rect: Rectangle =>
-            rwd.manage().window().setSize(rect.asSeleniumDimension);
-            rwd.manage().window().setPosition(rect.asSeleniumPoint)
-        }
-        Right(())
-      } catch {
-        case e: SeleniumUnsupportedCommandException => Left(new UnsupportedOperationException(e.getMessage))
-      }
-    )
+    EitherT.fromEither(ss.setState(windowState))
 
-  def rectangle: EitherT[F, Nothing, Rectangle] =
-    EitherT.pure(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
+  def rectangle: EitherT[F, Nothing, Rectangle] = EitherT.fromEither(ss.rectangle)
 
   def dismiss: EitherT[F, NoSuchAlertException, Unit] =
-    EitherT.fromEither(try {
-      Right(rwd.switchTo().alert().dismiss())
-    } catch {
-      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
-    })
+    EitherT.fromEither(ss.dismiss)
 
   def accept: EitherT[F, NoSuchAlertException, Unit] =
-    EitherT.fromEither(try {
-      Right(rwd.switchTo().alert().accept())
-    } catch {
-      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
-    })
+    EitherT.fromEither(ss.accept)
 
   def alertText: EitherT[F, NoSuchAlertException, Option[String]] =
-    EitherT.fromEither(try {
-      Right(Option(rwd.switchTo().alert().getText))
-    } catch {
-      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
-    })
+    EitherT.fromEither(ss.alertText)
 
   def setAlertText(text: String): EitherT[F, SendAlertTextException, Unit] =
-    EitherT.fromEither(try {
-      Right(rwd.switchTo().alert().sendKeys(text))
-    } catch {
-      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
-    })
+    EitherT.fromEither(ss.setAlertText(text))
 
 }
 
@@ -200,19 +102,23 @@ object UmbreonSession {
   ): Resource[F, UmbreonSession[F]] =
     Resource.make(
       Sync[F].delay(
-        new UmbreonSession[F](new SeleniumRemoteWebDriver(new URL(s"http://$host:$port"), capabilities.asSelenium))
+        new UmbreonSession[F](
+          new SeleniumSession(new SeleniumRemoteWebDriver(new URL(s"http://$host:$port"), capabilities.asSelenium))
+        )
       )
     )(
-      css => Sync[F].delay(css.rwd.quit())
+      css => Sync[F].delay(css.ss.rwd.quit())
     )
 
   def headlessChrome[F[_]: Sync]: Resource[F, UmbreonSession[F]] =
     Resource.make(
       Sync[F].delay(
-        new UmbreonSession[F](new SeleniumChromeDriver(new SeleniumChromeOptions().addArguments("--headless")))
+        new UmbreonSession[F](
+          new SeleniumSession(new SeleniumChromeDriver(new SeleniumChromeOptions().addArguments("--headless")))
+        )
       )
     )(
-      css => Sync[F].delay(css.rwd.quit())
+      css => Sync[F].delay(css.ss.rwd.quit())
     )
 
   /*

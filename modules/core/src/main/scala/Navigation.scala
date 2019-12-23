@@ -43,7 +43,7 @@ object Url {
 
 trait Navigate[F[_, _]] {
 
-  def navigate(command: NavigationCommand): F[NavigationException, Unit]
+  def navigate(navigationCommand: NavigationCommand): F[NavigationException, Unit]
   def to(url: Url): F[NavigationException, Unit] = navigate(url)
   def back: F[NavigationException, Unit]         = navigate(Back)
   def forward: F[NavigationException, Unit]      = navigate(Forward)
