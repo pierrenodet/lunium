@@ -56,7 +56,7 @@ class ElementSuite extends AnyFunSuite {
   }
 
   test(
-    "try to get a property something out of a element that doesn't exist should return a lunium.NullPointerException"
+    "try to get a property something out of a element that doesn't exist should return a None"
   ) {
 
     val err = resource
@@ -70,12 +70,7 @@ class ElementSuite extends AnyFunSuite {
       )
       .unsafeRunSync()
 
-    assert(
-      err.fold(_ match {
-        case _: NoSuchAttributeException => true
-        case _: LuniumException          => false
-      }, _ => false)
-    )
+    assert(err.exists(_.isEmpty))
 
   }
 
@@ -99,7 +94,7 @@ class ElementSuite extends AnyFunSuite {
       )
       .unsafeRunSync()
 
-    assert(bonjour.exists(_ == input))
+    assert(bonjour.exists(_.contains(input)))
 
   }
 }
