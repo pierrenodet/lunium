@@ -29,7 +29,7 @@ import org.openqa.selenium.{
   WebElement => SeleniumWebElement
 }
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 class SeleniumElement(private[lunium] val wb: SeleniumWebElement) extends Element[Either[*, *]] {
 

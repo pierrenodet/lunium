@@ -18,7 +18,7 @@ package lunium.selenium.syntax
 
 import lunium._
 import org.openqa.selenium.{ Keys => SeleniumKeys }
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 final class KeysOps(keys: Keys) {
   def asSelenium: String = {

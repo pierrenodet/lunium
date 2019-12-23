@@ -21,6 +21,7 @@ import lunium._
 import lunium.umbreon._
 import cats.data.EitherT
 import cats.implicits._
+import cats.effect.implicits._
 
 object Main extends IOApp {
 
@@ -36,7 +37,7 @@ object Main extends IOApp {
                      Cookie("n", "a", "/", Some("google.com"), secure = false, httpOnly = false, scala.None)
                    )
           _     <- session.addCookie(cookie)
-          found <- session.findCookie("n").leftWiden[LuniumException]
+          found <- EitherT[IO, LuniumException, Cookie](session.findCookie("n").value)
         } yield found
 
         res

@@ -16,6 +16,7 @@
 
 package lunium.tests
 
+import cats.data.EitherT
 import cats.effect._
 import cats.implicits._
 import lunium._
@@ -38,10 +39,10 @@ class ElementSuite extends AnyFunSuite {
       .use(
         session =>
           (for {
-            _       <- session.to(googleUrl).leftWiden[LuniumException]
-            element <- session.findElement(XPath("""//*[@id="hplogo"]""")).leftWiden[LuniumException]
-            _       <- session.to(microsoftUrl).leftWiden[LuniumException]
-            res     <- element.attribute("src").leftWiden[LuniumException]
+            _       <- session.to(googleUrl)
+            element <- session.findElement(XPath("""//*[@id="hplogo"]"""))
+            _       <- session.to(microsoftUrl)
+            res     <- EitherT[IO, LuniumException, Option[String]](element.attribute("src").value)
           } yield res).value
       )
       .unsafeRunSync()
@@ -63,9 +64,9 @@ class ElementSuite extends AnyFunSuite {
       .use(
         session =>
           (for {
-            _       <- session.to(googleUrl).leftWiden[LuniumException]
-            element <- session.findElement(XPath("""//*[@id="hplogo"]""")).leftWiden[LuniumException]
-            res     <- element.attribute("dsqdqsd").leftWiden[LuniumException]
+            _       <- session.to(googleUrl)
+            element <- session.findElement(XPath("""//*[@id="hplogo"]"""))
+            res     <- EitherT[IO, LuniumException, Option[String]](element.attribute("dsqdqsd").value)
           } yield res).value
       )
       .unsafeRunSync()
@@ -84,12 +85,11 @@ class ElementSuite extends AnyFunSuite {
       .use(
         session =>
           (for {
-            _ <- session.to(googleUrl).leftWiden[LuniumException]
+            _ <- session.to(googleUrl)
             element <- session
                         .findElement(XPath("""//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input"""))
-                        .leftWiden[LuniumException]
-            _   <- element.sendKeys(Keys(Set(input))).leftWiden[LuniumException]
-            res <- element.attribute("value").leftWiden[LuniumException]
+            _   <- element.sendKeys(Keys(Set(input)))
+            res <- EitherT[IO, LuniumException, Option[String]](element.attribute("value").value)
           } yield res).value
       )
       .unsafeRunSync()

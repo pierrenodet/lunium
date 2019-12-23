@@ -33,7 +33,7 @@ import org.openqa.selenium.{
   UnsupportedCommandException => SeleniumUnsupportedCommandException
 }
 
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 class SeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends Session[Either[*, *]] {
