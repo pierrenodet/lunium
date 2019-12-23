@@ -106,7 +106,7 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
   def contexts: IO[Nothing, List[ContextType]] =
     UIO(rwd.getWindowHandles.asScala.toList.flatMap(wh => ContextType.fromString(wh).toOption))
 
-  def current: IO[Nothing, ContextType] = UIO(ContextType.fromString(rwd.getWindowHandle).getOrElse(Default))
+  def current: IO[Nothing, ContextType] = UIO(ContextType.fromString(rwd.getWindowHandle.tail.tail).getOrElse(Default))
 
   def deleteCookies(): IO[Nothing, Unit] = UIO(rwd.manage().deleteAllCookies())
 
