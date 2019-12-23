@@ -38,7 +38,7 @@ lazy val commonSettings = Seq(
 
   // Compilation
   scalaVersion       := "2.13.1",
-  crossScalaVersions := Seq("2.11.12","2.12.10", scalaVersion.value),
+  crossScalaVersions := Seq("2.12.10", scalaVersion.value),
   scalacOptions -= "-language:experimental.macros", // doesn't work cross-version
   Compile / doc     / scalacOptions --= Seq("-Xfatal-warnings"),
   Compile / doc     / scalacOptions ++= Seq(
