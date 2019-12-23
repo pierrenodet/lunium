@@ -45,7 +45,7 @@ case class Capabilities(
   pageLoadStrategy: Option[PageLoadStrategy] = scala.None,
   proxy: Option[Proxy] = scala.None,
   setWindowRect: Option[Boolean] = scala.None,
-  timeouts: Option[Timeout] = scala.None,
+  timeouts: Option[Timeouts] = scala.None,
   strictFileInteractability: Boolean = false,
   unhandledPromptBehavior: UnhandledPromptBehavior = DismissAndNotify
 )

@@ -18,17 +18,17 @@ package lunium
 
 final case class ElementId(value: String)
 
-trait Element[F[_, _]] extends Search[F] with Fancy[F] {
+trait Element[F[_, _]] extends Search[F] with Fancy[F] with ElementInteraction[F] {
 
   def selected: F[StaleElementReferenceException, Boolean]
 
   def hasAttribute(name: String): F[StaleElementReferenceException, Boolean]
 
-  def attribute(name: String): F[GetFromElementException, String]
+  def attribute(name: String): F[StaleElementReferenceException, Option[String]]
 
-  def property(name: String): F[GetFromElementException, String]
+  def property(name: String): F[StaleElementReferenceException, Option[String]]
 
-  def css(name: String): F[GetFromElementException, String]
+  def css(name: String): F[StaleElementReferenceException, Option[String]]
 
   def text(whitespace: String = "WS"): F[StaleElementReferenceException, String]
 
@@ -38,12 +38,6 @@ trait Element[F[_, _]] extends Search[F] with Fancy[F] {
 
   def enabled: F[StaleElementReferenceException, Boolean]
 
-  def click: F[InteractElementException, Unit]
-
-  def clear: F[InteractElementException, Unit]
-
-  def sendKeys(keys: Keys): F[InteractElementException, Unit]
-
 }
 
 object Element {
@@ -52,6 +46,18 @@ object Element {
 
 }
 
-class UsableElement[F[_, _]](element: Element[F]) {
-  def use[T](f: Element[F] => T): T = f(element)
+trait ElementInteraction[F[_, _]] {
+
+  def click: F[InteractElementException, Unit]
+
+  def clear: F[InteractElementException, Unit]
+
+  def sendKeys(keys: Keys): F[InteractElementException, Unit]
+
+}
+
+object ElementInteraction {
+
+  def apply[F[_, _]](implicit instance: ElementInteraction[F]): ElementInteraction[F] = instance
+
 }

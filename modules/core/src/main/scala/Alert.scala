@@ -16,23 +16,17 @@
 
 package lunium
 
-final case class SessionStatus(ready: Boolean, message: String)
+trait Alert[F[_, _]] {
 
-final case class SessionId(value: String)
+  def dismiss: F[NoSuchAlertException, Unit]
+  def accept: F[NoSuchAlertException, Unit]
+  def alertText: F[NoSuchAlertException, Option[String]]
+  def setAlertText(text: String): F[SendAlertTextException, Unit]
 
-trait Session[F[_, _]]
-    extends Fancy[F]
-    with Search[F]
-    with Document[F]
-    with Execution[F]
-    with Bakery[F]
-    with Context[F]
-    with Navigate[F]
-    with Timeout[F]
-    with Alert[F]
+}
 
-object Session {
+object Alert {
 
-  def apply[F[_, _]](implicit instance: Session[F]): Session[F] = instance
+  def apply[F[_, _]](implicit instance: Alert[F]): Alert[F] = instance
 
 }

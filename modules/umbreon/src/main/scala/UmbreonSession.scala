@@ -30,6 +30,7 @@ import scala.util.Try
 import cats.data.EitherT
 import org.openqa.selenium.chrome.{ ChromeDriver => SeleniumChromeDriver, ChromeOptions => SeleniumChromeOptions }
 import org.openqa.selenium.{
+  NoAlertPresentException => SeleniumNoAlertPresentException,
   InvalidCookieDomainException => SeleniumInvalidCookieDomainException,
   InvalidSelectorException => SeleniumInvalidSelectorException,
   NoSuchCookieException => SeleniumNoSuchCookieException,
@@ -74,9 +75,9 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
 
   def screenshot: EitherT[F, Nothing, Array[Byte]] = EitherT.pure(rwd.getScreenshotAs(SeleniumOutputType.BYTES))
 
-  def timeout: EitherT[F, Nothing, Timeout] = EitherT.pure(new Timeout(1))
+  def timeouts: EitherT[F, Nothing, Timeouts] = EitherT.pure(new Timeouts(1))
 
-  def setTimeout(timeout: Timeout): EitherT[F, Nothing, Unit] =
+  def setTimeouts(timeout: Timeouts): EitherT[F, Nothing, Unit] =
     EitherT.liftF(for {
       _ <- Sync[F].delay(
             rwd.manage.timeouts.implicitlyWait(timeout.implicitWait, TimeUnit.MILLISECONDS)
@@ -159,6 +160,34 @@ class UmbreonSession[F[_]: Sync](private[lunium] val rwd: SeleniumRemoteWebDrive
 
   def rectangle: EitherT[F, Nothing, Rectangle] =
     EitherT.pure(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
+
+  def dismiss: EitherT[F, NoSuchAlertException, Unit] =
+    EitherT.fromEither(try {
+      Right(rwd.switchTo().alert().dismiss())
+    } catch {
+      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
+    })
+
+  def accept: EitherT[F, NoSuchAlertException, Unit] =
+    EitherT.fromEither(try {
+      Right(rwd.switchTo().alert().accept())
+    } catch {
+      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
+    })
+
+  def alertText: EitherT[F, NoSuchAlertException, Option[String]] =
+    EitherT.fromEither(try {
+      Right(Option(rwd.switchTo().alert().getText))
+    } catch {
+      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
+    })
+
+  def setAlertText(text: String): EitherT[F, SendAlertTextException, Unit] =
+    EitherT.fromEither(try {
+      Right(rwd.switchTo().alert().sendKeys(text))
+    } catch {
+      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
+    })
 
 }
 

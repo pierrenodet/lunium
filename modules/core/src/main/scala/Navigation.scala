@@ -34,9 +34,28 @@ object Url {
 
   def apply(value: String): Either[InvalidArgumentException, Url] =
     try {
-      Right(new Url(new java.net.URL(value).toString()))
+      Right(new Url(new java.net.URL(value).toString))
     } catch {
-      case e: MalformedURLException => Left(new InvalidArgumentException(e.getMessage()))
+      case e: MalformedURLException => Left(new InvalidArgumentException(e.getMessage))
     }
+
+}
+
+trait Navigate[F[_, _]] {
+
+  def navigate(command: NavigationCommand): F[NavigationException, Unit]
+  def to(url: Url): F[NavigationException, Unit] = navigate(url)
+  def back: F[NavigationException, Unit]         = navigate(Back)
+  def forward: F[NavigationException, Unit]      = navigate(Forward)
+  def refresh: F[NavigationException, Unit]      = navigate(Refresh)
+
+  def url: F[Nothing, Url]
+  def title: F[Nothing, String]
+
+}
+
+object Navigate {
+
+  def apply[F[_, _]](implicit instance: Navigate[F]): Navigate[F] = instance
 
 }

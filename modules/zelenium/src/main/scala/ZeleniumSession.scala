@@ -17,6 +17,7 @@
 package lunium.zelenium
 
 import org.openqa.selenium.{
+  NoAlertPresentException => SeleniumNoAlertPresentException,
   InvalidCookieDomainException => SeleniumInvalidCookieDomainException,
   InvalidSelectorException => SeleniumInvalidSelectorException,
   NoSuchCookieException => SeleniumNoSuchCookieException,
@@ -70,9 +71,9 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
 
   def screenshot: IO[Nothing, Array[Byte]] = UIO(rwd.getScreenshotAs(SeleniumOutputType.BYTES))
 
-  def timeout: IO[Nothing, Timeout] = UIO.succeed(new Timeout(1))
+  def timeouts: IO[Nothing, Timeouts] = UIO.succeed(new Timeouts(1))
 
-  def setTimeout(timeout: Timeout): IO[Nothing, Unit] =
+  def setTimeouts(timeout: Timeouts): IO[Nothing, Unit] =
     for {
       _ <- UIO(
             rwd.manage.timeouts.implicitlyWait(timeout.implicitWait, TimeUnit.MILLISECONDS)
@@ -143,7 +144,7 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
           case Maximized  => rwd.manage().window().maximize()
           case Minimized  => rwd.manage().window().setPosition(new Rectangle(0, -1000, 0, 0).asSeleniumPoint)
           case rect: Rectangle =>
-            rwd.manage().window().setSize(rect.asSeleniumDimension);
+            rwd.manage().window().setSize(rect.asSeleniumDimension)
             rwd.manage().window().setPosition(rect.asSeleniumPoint)
         }
         Right(())
@@ -154,6 +155,34 @@ class ZeleniumSession(private[lunium] val rwd: SeleniumRemoteWebDriver) extends 
 
   def rectangle: IO[Nothing, Rectangle] =
     UIO.apply(new SeleniumRectangle(rwd.manage().window().getPosition, rwd.manage().window().getSize).asLunium)
+
+  def dismiss: IO[NoSuchAlertException, Unit] =
+    IO.fromEither(try {
+      Right(rwd.switchTo().alert().dismiss())
+    } catch {
+      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
+    })
+
+  def accept: IO[NoSuchAlertException, Unit] =
+    IO.fromEither(try {
+      Right(rwd.switchTo().alert().accept())
+    } catch {
+      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
+    })
+
+  def alertText: IO[NoSuchAlertException, Option[String]] =
+    IO.fromEither(try {
+      Right(Option(rwd.switchTo().alert().getText))
+    } catch {
+      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
+    })
+
+  def setAlertText(text: String): IO[SendAlertTextException, Unit] =
+    IO.fromEither(try {
+      Right(rwd.switchTo().alert().sendKeys(text))
+    } catch {
+      case e: SeleniumNoAlertPresentException => Left(new NoSuchAlertException(e.getMessage))
+    })
 
 }
 

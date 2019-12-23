@@ -38,11 +38,14 @@ sealed abstract class LuniumException(message: String) extends Exception(message
 sealed trait NavigationException      extends LuniumException
 sealed trait SearchElementException   extends LuniumException
 sealed trait InteractElementException extends LuniumException
-sealed trait GetFromElementException  extends LuniumException
+sealed trait SendAlertTextException   extends LuniumException
 
 //low level exceptions
 class ElementClickInterceptedException(message: String) extends LuniumException(message) with InteractElementException
-class ElementNotInteractableException(message: String)  extends LuniumException(message) with InteractElementException
+class ElementNotInteractableException(message: String)
+    extends LuniumException(message)
+    with InteractElementException
+    with SendAlertTextException
 
 class InsecureCertificateException(message: String) extends LuniumException(message) with NavigationException
 
@@ -56,16 +59,15 @@ class JavascriptErrorException(message: String) extends LuniumException(message)
 
 class MoveTargetOutOfBoundsException(message: String) extends LuniumException(message)
 
-class NoSuchAlertException(message: String)     extends LuniumException(message)
-class NoSuchCookieException(message: String)    extends LuniumException(message)
-class NoSuchElementException(message: String)   extends LuniumException(message) with SearchElementException
-class NoSuchFrameException(message: String)     extends LuniumException(message)
-class NoSuchWindowException(message: String)    extends LuniumException(message)
-class NoSuchAttributeException(message: String) extends LuniumException(message) with GetFromElementException
+class NoSuchAlertException(message: String)   extends LuniumException(message) with SendAlertTextException
+class NoSuchCookieException(message: String)  extends LuniumException(message)
+class NoSuchElementException(message: String) extends LuniumException(message) with SearchElementException
+class NoSuchFrameException(message: String)   extends LuniumException(message)
+class NoSuchWindowException(message: String)  extends LuniumException(message)
 
 class ScriptTimeoutException(message: String)         extends LuniumException(message)
 class SessionNotCreatedException(message: String)     extends LuniumException(message)
-class StaleElementReferenceException(message: String) extends LuniumException(message) with GetFromElementException
+class StaleElementReferenceException(message: String) extends LuniumException(message) with InteractElementException
 class TimeoutException(message: String)               extends LuniumException(message) with NavigationException
 
 class UnableToSetCookieException(message: String)     extends LuniumException(message)
@@ -75,6 +77,6 @@ class UnexpectedAlertOpenException(message: String)   extends LuniumException(me
 class UnknownCommandException(message: String)       extends LuniumException(message)
 class UnknownErrorException(message: String)         extends LuniumException(message)
 class UnknownMethodException(message: String)        extends LuniumException(message)
-class UnsupportedOperationException(message: String) extends LuniumException(message)
+class UnsupportedOperationException(message: String) extends LuniumException(message) with SendAlertTextException
 
 class HttpUnauthorizedException(message: String) extends LuniumException(message) with NavigationException

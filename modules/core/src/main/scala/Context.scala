@@ -53,6 +53,9 @@ trait Context[F[_, _]] {
 
   def fullscreen: F[UnsupportedOperationException, Unit] = setState(FullScreen)
 
+  def contexts: F[Nothing, List[ContextType]]
+  def current: F[Nothing, ContextType]
+
 }
 
 object Context {

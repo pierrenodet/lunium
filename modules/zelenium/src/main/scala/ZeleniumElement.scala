@@ -18,6 +18,8 @@ package lunium
 
 import lunium.selenium.implicits._
 import org.openqa.selenium.{
+  ElementClickInterceptedException => SeleniumElementClickInterceptedException,
+  ElementNotInteractableException => SeleniumElementNotInteractableException,
   InvalidElementStateException => SeleniumInvalidElementStateException,
   InvalidSelectorException => SeleniumInvalidSelectorException,
   NoSuchElementException => SeleniumNoSuchElementException,
@@ -69,25 +71,20 @@ class ZeleniumElement(private[lunium] val wb: SeleniumWebElement) extends Elemen
       case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage))
     })
 
-  def attribute(name: String): IO[StaleElementReferenceException, String] =
+  def attribute(name: String): IO[StaleElementReferenceException, Option[String]] =
     IO.fromEither(try {
-      Right(wb.getAttribute(name))
+      Right(Option(wb.getAttribute(name)))
     } catch {
       case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage))
     })
 
-  def hasAttribute(name: String): IO[StaleElementReferenceException, Boolean] =
-    IO.fromEither(try {
-      Right(attribute(name)).map(name => Option(name).isDefined)
-    } catch {
-      case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage))
-    })
+  def hasAttribute(name: String): IO[StaleElementReferenceException, Boolean] = attribute(name).map(_.isDefined)
 
-  def property(name: String): IO[StaleElementReferenceException, String] = attribute(name)
+  def property(name: String): IO[StaleElementReferenceException, Option[String]] = attribute(name)
 
-  def css(name: String): IO[StaleElementReferenceException, String] =
+  def css(name: String): IO[StaleElementReferenceException, Option[String]] =
     IO.fromEither(try {
-      Right(wb.getCssValue(name))
+      Right(Option(wb.getCssValue(name)))
     } catch {
       case e: SeleniumStaleElementReferenceException => Left(new StaleElementReferenceException(e.getMessage))
     })
@@ -124,27 +121,27 @@ class ZeleniumElement(private[lunium] val wb: SeleniumWebElement) extends Elemen
     IO.fromEither(try {
       Right(wb.click())
     } catch {
-      case e: SeleniumInvalidSelectorException     => Left(new ElementClickInterceptedException(e.getMessage))
-      case e: SeleniumNoSuchElementException       => Left(new ElementNotInteractableException(e.getMessage))
-      case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage))
+      case e: SeleniumElementClickInterceptedException => Left(new ElementClickInterceptedException(e.getMessage))
+      case e: SeleniumElementNotInteractableException  => Left(new ElementNotInteractableException(e.getMessage))
+      case e: SeleniumInvalidElementStateException     => Left(new InvalidElementStateException(e.getMessage))
     })
 
   def clear: IO[InteractElementException, Unit] =
     IO.fromEither(try {
       Right(wb.clear())
     } catch {
-      case e: SeleniumInvalidSelectorException     => Left(new ElementClickInterceptedException(e.getMessage))
-      case e: SeleniumNoSuchElementException       => Left(new ElementNotInteractableException(e.getMessage))
-      case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage))
+      case e: SeleniumElementClickInterceptedException => Left(new ElementClickInterceptedException(e.getMessage))
+      case e: SeleniumElementNotInteractableException  => Left(new ElementNotInteractableException(e.getMessage))
+      case e: SeleniumInvalidElementStateException     => Left(new InvalidElementStateException(e.getMessage))
     })
 
   def sendKeys(keys: Keys): IO[InteractElementException, Unit] =
     IO.fromEither(try {
       Right(wb.sendKeys(keys.asSelenium))
     } catch {
-      case e: SeleniumInvalidSelectorException     => Left(new ElementClickInterceptedException(e.getMessage))
-      case e: SeleniumNoSuchElementException       => Left(new ElementNotInteractableException(e.getMessage))
-      case e: SeleniumInvalidElementStateException => Left(new InvalidElementStateException(e.getMessage))
+      case e: SeleniumElementClickInterceptedException => Left(new ElementClickInterceptedException(e.getMessage))
+      case e: SeleniumElementNotInteractableException  => Left(new ElementNotInteractableException(e.getMessage))
+      case e: SeleniumInvalidElementStateException     => Left(new InvalidElementStateException(e.getMessage))
     })
 
 }

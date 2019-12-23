@@ -16,7 +16,7 @@
 
 package lunium
 
-sealed case class Timeout private[lunium] (
+sealed case class Timeouts private[lunium] (
   implicitWait: Long = 0,
   pageLoad: Long = 300000,
   script: Option[Long] = Some(30000)
@@ -25,27 +25,27 @@ sealed case class Timeout private[lunium] (
     implicitWait: Long = implicitWait,
     pageLoad: Long = pageLoad,
     script: Option[Long] = script
-  ): Either[InvalidArgumentException, Timeout] = Timeout(implicitWait, pageLoad, script)
+  ): Either[InvalidArgumentException, Timeouts] = Timeouts(implicitWait, pageLoad, script)
 }
 
-object Timeout {
+object Timeouts {
 
   def apply(
     implicitWait: Long = 0,
     pageLoad: Long = 300000,
     script: Option[Long] = Some(30000)
-  ): Either[InvalidArgumentException, Timeout] =
+  ): Either[InvalidArgumentException, Timeouts] =
     for {
       script       <- validateScript(script)
       pageLoad     <- validatePageLoad(pageLoad)
       implicitWait <- validateImplicitWait(implicitWait)
-    } yield (new Timeout(implicitWait, pageLoad, script))
+    } yield (new Timeouts(implicitWait, pageLoad, script))
 
-  def script(value: Option[Long]): Either[InvalidArgumentException, Timeout] = Timeout(script = value)
+  def script(value: Option[Long]): Either[InvalidArgumentException, Timeouts] = Timeouts(script = value)
 
-  def pageLoad(value: Long): Either[InvalidArgumentException, Timeout] = Timeout(pageLoad = value)
+  def pageLoad(value: Long): Either[InvalidArgumentException, Timeouts] = Timeouts(pageLoad = value)
 
-  def implicitWait(value: Long): Either[InvalidArgumentException, Timeout] = Timeout(implicitWait = value)
+  def implicitWait(value: Long): Either[InvalidArgumentException, Timeouts] = Timeouts(implicitWait = value)
 
   private def validateScript(value: Option[Long]): Either[InvalidArgumentException, Option[Long]] =
     value match {
@@ -71,5 +71,18 @@ object Timeout {
     } else {
       Left(new InvalidArgumentException(s"implicitWait should be between 0 and 2^16-1, but was : $value"))
     }
+
+}
+
+trait Timeout[F[_, _]] {
+
+  def timeouts: F[Nothing, Timeouts]
+  def setTimeouts(timeout: Timeouts): F[Nothing, Unit]
+
+}
+
+object Timeout {
+
+  def apply[F[_, _]](implicit instance: Timeout[F]): Timeout[F] = instance
 
 }
