@@ -5,6 +5,8 @@ title: Exemple
 
 ## Quick App
 
+Here is what would like an app that open a session from a remote WebDriver server, then would go on google.com, find the logo and get back the link of the image. If there is no link or an error appened, the app would fail, otherwise it will print it into the console.
+
 ```scala
 import cats.effect._
 import lunium._
@@ -21,14 +23,19 @@ object Main extends IOApp {
         val res = for {
           url    <- EitherT.fromEither[IO](Url("http://google.com"))
           _      <- session.to(url)
-          _      <- session.deleteCookies()
-          cookie <- EitherT.fromEither[IO](Cookie("n", "a", "/", Some("google.com"), false, false, scala.None))
-          _      <- session.addCookie(cookie)
-          found  <- session.findCookie("n").leftWiden[LuniumException]
-        } yield (found)
+          element <- session.findElement(XPath("""//*[@id="hplogo"]"""))
+          imageLink <- element.attribute("src").leftWiden[LuniumException]
+        } yield (imageLink)
+        ).value
 
         res
-          .map(r => { println(r); ExitCode.Success })
+          .map{
+            case Some(value) =>
+              println(value)
+              ExitCode.Success
+            case None =>
+              ExitCode.Error
+          }
           .valueOr(_ => ExitCode.Error)
       })
 

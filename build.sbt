@@ -142,7 +142,7 @@ lazy val docs = project
   .settings(
     moduleName := "lunium-docs",
     skip in publish := true,
-    mdocVariables := Map("VERSION" -> version.value),
+    mdocVariables := Map("VERSION" -> version.value.takeWhile(_ != '+')),
     mdocIn := new File("modules/docs"),
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(core,umbreon,zelenium),
     target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
