@@ -55,29 +55,32 @@
               }
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Overview</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="why-"></a><a href="#why-" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Why ?</h2>
-<p>I was getting pissed to get unchecked exceptions everywhere, cluncky Thread.sleep and browsers hanging opened left and right.</p>
-<p>Hope that's clean enough for you :</p>
+<p>I was doing some projects about web scrapping, and I was tired of the selenium Java API, getting unchecked exceptions everywhere, cluncky sleeps and waits, and browsers hanging opened left and right when something bad happen.</p>
+<p>So I have decided to actually apply all the blogs I have read about why FP is great, pure functions, effects, ADT, tagless final (don't kill me it's the double coffee cup : <code>F[_,_]</code>), ...</p>
+<p>The aim of the project is to go as far as skunk with reimpleting a complete client for WebDrivers, but as it's though and i wanted to at least get the API right, it's using Selenium as the first implementation of my &quot;algebras&quot;.</p>
+<p>Here is small snippet, hope it's good enough, I'm a shitty programmer :</p>
 <pre><code class="hljs css language-scala"><span class="hljs-type">UmbreonSession</span>
   .headlessChrome
   .use(session =&gt; (
     <span class="hljs-keyword">for</span> {
       url    &lt;- <span class="hljs-type">EitherT</span>.fromEither[<span class="hljs-type">IO</span>](<span class="hljs-type">Url</span>(<span class="hljs-string">"http://google.com"</span>))
       _      &lt;- session.to(url)
-      element &lt;- session.findElement(<span class="hljs-type">XPath</span>(<span class="hljs-string">""</span><span class="hljs-string">"//*[@id="</span><span class="hljs-string">hplogo"]"</span><span class="hljs-string">""</span>)).leftWiden[<span class="hljs-type">LuniumException</span>]
-    } <span class="hljs-keyword">yield</span> (element)
+      element &lt;- session.findElement(<span class="hljs-type">XPath</span>(<span class="hljs-string">""</span><span class="hljs-string">"//*[@id="</span><span class="hljs-string">hplogo"]"</span><span class="hljs-string">""</span>))
+      imageLink &lt;- element.attribute(<span class="hljs-string">"src"</span>).leftWiden[<span class="hljs-type">LuniumException</span>]
+    } <span class="hljs-keyword">yield</span> (imageLink)
   ).value
 )
 </code></pre>
-<h2><a class="anchor" aria-hidden="true" id="how-its-done"></a><a href="#how-its-done" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>How it's done</h2>
+<h2><a class="anchor" aria-hidden="true" id="what-are-this-modules-"></a><a href="#what-are-this-modules-" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>What are this modules ?</h2>
 <p>I tried to make it as modular as possible, you have tagless &quot;algebras&quot; bifunctored and ADTs in the <code>lunium-core</code> module.</p>
-<p>The <code>lunium-selenium</code> propose implicits conversion between the lunium ADTs and selenium objects.</p>
-<p>Then there is one module per effect library ecosystem, <code>lunium-zelenium</code> for ZIO, and <code>lunium-umbreon</code> for cats.</p>
+<p>The <code>lunium-selenium</code> propose implicits conversion between the lunium ADTs and selenium objects, and an interpreter for selenium without effect types (but it's unusable).</p>
+<p>Then there is one module per effect library ecosystem, <code>lunium-zelenium</code> for ZIO, and <code>lunium-umbreon</code> for cats. They both contain an interpreter that are not interdependent and hopefully leverage the best of both ecosystems, at the price of small copy pasting.</p>
 <h2><a class="anchor" aria-hidden="true" id="ready-to-install-"></a><a href="#ready-to-install-" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Ready to Install ?</h2>
 <p><strong>Core</strong></p>
-<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"com.github.pierrenodet"</span> %% <span class="hljs-string">"lunium-core"</span> % <span class="hljs-string">"0.0.0+24-41c8d7f5-SNAPSHOT"</span>
+<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"com.github.pierrenodet"</span> %% <span class="hljs-string">"lunium-core"</span> % <span class="hljs-string">"0.0.0"</span>
 </code></pre>
 <p><strong>Choose your Monad</strong></p>
-<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"com.github.pierrenodet"</span> %% <span class="hljs-string">"lunium-zelenium"</span> % <span class="hljs-string">"0.0.0+24-41c8d7f5-SNAPSHOT"</span>
-libraryDependencies += <span class="hljs-string">"com.github.pierrenodet"</span> %% <span class="hljs-string">"lunium-umbreon"</span> % <span class="hljs-string">"0.0.0+24-41c8d7f5-SNAPSHOT"</span>
+<pre><code class="hljs css language-scala">libraryDependencies += <span class="hljs-string">"com.github.pierrenodet"</span> %% <span class="hljs-string">"lunium-zelenium"</span> % <span class="hljs-string">"0.0.0"</span>
+libraryDependencies += <span class="hljs-string">"com.github.pierrenodet"</span> %% <span class="hljs-string">"lunium-umbreon"</span> % <span class="hljs-string">"0.0.0"</span>
 </code></pre>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-next button" href="/lunium/docs/exemple"><span>Exemple</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#why-">Why ?</a></li><li><a href="#how-its-done">How it's done</a></li><li><a href="#ready-to-install-">Ready to Install ?</a></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2019 Pierre Nodet<br/></section></footer></div></body></html>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-next button" href="/lunium/docs/exemple"><span>Exemple</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#why-">Why ?</a></li><li><a href="#what-are-this-modules-">What are this modules ?</a></li><li><a href="#ready-to-install-">Ready to Install ?</a></li></ul></nav></div><footer class="nav-footer" id="footer"><hr class="separator"/><section class="copyright">Copyright © 2019 Pierre Nodet<br/></section></footer></div></body></html>
